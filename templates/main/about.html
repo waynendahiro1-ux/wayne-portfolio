@@ -1,0 +1,294 @@
+{% extends 'main/base.html' %}
+
+{% block title %}About Me | Wayne Portfolio{% endblock %}
+
+{% block content %}
+<style>
+  .about-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 1rem 4rem;
+  }
+
+  .page-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .page-title {
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .page-subtitle {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    max-width: 560px;
+    line-height: 1.6;
+  }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 1.6rem;
+    margin-bottom: 2.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .about-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .info-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    border-radius: 1rem;
+    padding: 1.8rem;
+    transition: all 0.3s ease;
+  }
+
+  .info-card:hover {
+    border-color: rgba(56, 189, 248, 0.28);
+    box-shadow: 0 12px 30px rgba(34, 211, 238, 0.07);
+  }
+
+  .info-card h2 {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 650;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .info-card p {
+    color: #cbd5e1;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+
+  .info-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .fact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .fact-list li {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  }
+
+  .fact-list li:last-child {
+    border-bottom: none;
+  }
+
+  .fact-list .label {
+    color: #fff;
+    font-weight: 550;
+    min-width: 110px;
+  }
+
+  .fact-list .value {
+    color: #94a3b8;
+  }
+
+  .highlight-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .highlight-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .highlight-card:hover {
+    border-color: rgba(56, 189, 248, 0.28);
+    transform: translateY(-3px);
+  }
+
+  .highlight-card .icon {
+    font-size: 1.7rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .highlight-card h3 {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+  }
+
+  .highlight-card p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .cta-box {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .cta-box h2 {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+
+  .cta-box p {
+    color: #94a3b8;
+    margin-bottom: 1.5rem;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.7rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    display: inline-block;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: #67e8f9;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    border: 1px solid rgba(34, 211, 238, 0.4);
+    transition: all 0.25s ease;
+    display: inline-block;
+    margin-left: 0.7rem;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(34, 211, 238, 0.1);
+    border-color: #22d3ee;
+  }
+</style>
+
+<div class="about-page">
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">About Me</h1>
+    <p class="page-subtitle">
+      Grade 12 student from Kigali who codes, captains, and competes.
+    </p>
+  </div>
+
+  <!-- Main bio + facts -->
+  <div class="about-grid">
+    <div class="info-card">
+      <h2>👋 Who I am</h2>
+      <p>
+        My name is Wayne. I'm a Grade 12 student living in Kigali, Rwanda. I built this portfolio with Django as part of my school project, and I genuinely enjoy turning ideas into working web applications.
+      </p>
+      <p>
+        Outside of class and coding, I'm the captain of our school basketball team. We won the 2024–25 GPSL Basketball Tournament, which still feels unreal. That experience taught me a lot about leadership, pressure, and showing up every day.
+      </p>
+      <p>
+        I'm especially interested in fintech and how technology can create real business opportunities. Whether it's a clean web app or a smart financial tool, I want to build things people actually use.
+      </p>
+    </div>
+
+    <div class="info-card">
+      <h2>⚡ Quick Facts</h2>
+      <ul class="fact-list">
+        <li>
+          <span class="label">Location</span>
+          <span class="value">Kigali, Rwanda</span>
+        </li>
+        <li>
+          <span class="label">Education</span>
+          <span class="value">Grade 12</span>
+        </li>
+        <li>
+          <span class="label">Academics</span>
+          <span class="value">A* IGCSE Computer Science</span>
+        </li>
+        <li>
+          <span class="label">Sports</span>
+          <span class="value">Basketball Team Captain</span>
+        </li>
+        <li>
+          <span class="label">Achievement</span>
+          <span class="value">2024–25 GPSL Champions</span>
+        </li>
+        <li>
+          <span class="label">Focus</span>
+          <span class="value">Web Dev • Fintech • Business</span>
+        </li>
+        <li>
+          <span class="label">Stack</span>
+          <span class="value">Python, Django, HTML/CSS/JS</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Highlights -->
+  <div class="highlight-row">
+    <div class="highlight-card">
+      <div class="icon">🏀</div>
+      <h3>On the Court</h3>
+      <p>Captain of the basketball team and proud winner of the 2024–25 GPSL Tournament. Leadership and teamwork under pressure.</p>
+    </div>
+
+    <div class="highlight-card">
+      <div class="icon">💻</div>
+      <h3>In the Code</h3>
+      <p>A* in IGCSE Computer Science. Building real projects with Django and constantly leveling up my skills.</p>
+    </div>
+
+    <div class="highlight-card">
+      <div class="icon">💳</div>
+      <h3>Future Focus</h3>
+      <p>Deeply interested in fintech and the business side of technology. Looking for ways tech can create real impact.</p>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <h2>Want to talk?</h2>
+    <p>
+      Whether it's about basketball, code, fintech ideas, or just saying hi — I'm always down to connect.
+    </p>
+    <div>
+      <a href="{% url 'contact' %}" class="btn-primary">Get in Touch</a>
+      <a href="{% url 'home' %}" class="btn-secondary">Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,111 +1,227 @@
-
 {% extends 'main/base.html' %}
 
-{% block title %}Home | Wayne's Portfolio{% endblock %}
+{% block title %}Home | Wayne Portfolio{% endblock %}
 
 {% block content %}
+<style>
+  .hero-section {
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
 
-<section class="hero">
-    <div class="container">
-        <p class="tag">STUDENT · DEVELOPER · SOFTWARE ENGINEER</p>
+  .hero-content {
+    max-width: 820px;
+    width: 100%;
+  }
 
-        <h1>
-            Building ideas into <span>real solutions.</span>
-        </h1>
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
 
-        <p>
-            I'm Wayne, a student passionate about computer science,
-            business, and technology-driven entrepreneurship.
-            I want to turn ideas into practical digital solutions
-            that enrich society.
-        </p>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: rgba(34, 211, 238, 0.12);
+    color: #67e8f9;
+    border: 1px solid rgba(34, 211, 238, 0.25);
+  }
 
-        <a href="#projects" class="button">Explore My Work</a>
+  .hero-title {
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 1rem;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, #22d3ee, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-text {
+    font-size: 1.15rem;
+    color: #cbd5e1;
+    line-height: 1.7;
+    margin-bottom: 0.8rem;
+    max-width: 640px;
+  }
+
+  .hero-sub {
+    color: #94a3b8;
+    margin-bottom: 2rem;
+    max-width: 640px;
+    line-height: 1.6;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.6rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    border: none;
+    display: inline-block;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: #67e8f9;
+    font-weight: 600;
+    padding: 0.75rem 1.6rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    border: 1px solid rgba(34, 211, 238, 0.45);
+    transition: all 0.25s ease;
+    display: inline-block;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(34, 211, 238, 0.1);
+    border-color: #22d3ee;
+  }
+
+  /* Achievements preview */
+  .achievements-preview {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 1rem 4rem;
+  }
+
+  .section-heading {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.4rem;
+  }
+
+  .section-sub {
+    color: #94a3b8;
+    margin-bottom: 2rem;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.4rem;
+  }
+
+  .info-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    border-radius: 1rem;
+    padding: 1.6rem;
+    transition: all 0.3s ease;
+  }
+
+  .info-card:hover {
+    border-color: rgba(56, 189, 248, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(34, 211, 238, 0.08);
+  }
+
+  .info-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .info-card h3 {
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .info-card p {
+    color: #94a3b8;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+</style>
+
+<!-- Hero -->
+<section class="hero-section">
+  <div class="hero-content">
+    <div class="badge-row">
+      <span class="badge">🏀 Basketball Captain</span>
+      <span class="badge">🏆 GPSL Champions 24–25</span>
+      <span class="badge">⭐ A* Computer Science</span>
     </div>
+
+    <h1 class="hero-title">Hi, I'm <span>Wayne</span></h1>
+
+    <p class="hero-text">
+      Grade 12 student from <strong style="color:#67e8f9;">Kigali, Rwanda</strong>. Passionate about technology, web development, fintech, and building useful digital solutions.
+    </p>
+
+    <p class="hero-sub">
+      Captain of the school basketball team • Winner of the 2024–25 GPSL Basketball Tournament • A* in IGCSE Computer Science. Always exploring the intersection of tech and business.
+    </p>
+
+    <div class="btn-group">
+      <a href="{% url 'about' %}" class="btn-primary">About Me</a>
+      <a href="{% url 'contact' %}" class="btn-secondary">Get in Touch</a>
+    </div>
+  </div>
 </section>
 
-<section class="section-dark" id="about">
-    <div class="container">
-        <h2 class="section-title">About Me</h2>
+<!-- Quick highlights -->
+<section class="achievements-preview">
+  <h2 class="section-heading">What I bring</h2>
+  <p class="section-sub">A mix of leadership on the court and results in the classroom.</p>
 
-        <p>
-            I'm developing my programming, analytical thinking,
-            and problem-solving skills. My goal is to combine
-            technology and business to create solutions that
-            address real-world problems.
-        </p>
+  <div class="cards-grid">
+    <div class="info-card">
+      <div class="icon">🏀</div>
+      <h3>Basketball Captain</h3>
+      <p>Leading the school team with focus, discipline, and belief. Building chemistry and competing at a high level.</p>
     </div>
-</section>
 
-<section id="skills">
-    <div class="container">
-        <h2 class="section-title">My Skills</h2>
-
-        <p>Technologies and subjects I'm learning and practising.</p>
-
-        <div class="skills">
-            <span class="skill">Python</span>
-            <span class="skill">HTML</span>
-            <span class="skill">CSS</span>
-            <span class="skill">Django</span>
-            <span class="skill">Computer Science</span>
-            <span class="skill">Business</span>
-            <span class="skill">Problem Solving</span>
-        </div>
+    <div class="info-card">
+      <div class="icon">🏆</div>
+      <h3>2024–25 GPSL Champions</h3>
+      <p>Won the GPSL Basketball Tournament with the team. Hard work and late practices paid off.</p>
     </div>
-</section>
 
-<section class="section-dark" id="projects">
-    <div class="container">
-        <h2 class="section-title">My Projects</h2>
-
-        <p>
-            A place to document my practical work and development
-            as a programmer.
-        </p>
-
-        <div class="cards">
-            <article class="card">
-                <h3>Personal Portfolio</h3>
-                <p>
-                    A Django website built to showcase my skills,
-                    interests, and projects.
-                </p>
-            </article>
-
-            <article class="card">
-                <h3>Student Calculator</h3>
-                <p>
-                    A planned project to practise programming logic
-                    and mathematical calculations.
-                </p>
-            </article>
-
-            <article class="card">
-                <h3>Business Technology</h3>
-                <p>
-                    Exploring digital ideas that could help businesses
-                    solve everyday challenges.
-                </p>
-            </article>
-        </div>
+    <div class="info-card">
+      <div class="icon">⭐</div>
+      <h3>A* in Computer Science</h3>
+      <p>Achieved an A* in IGCSE Computer Science. Strong foundation in programming and problem-solving.</p>
     </div>
-</section>
 
-<section id="contact">
-    <div class="container">
-        <h2 class="section-title">Let's Connect</h2>
-
-        <p>
-            I'm interested in technology, entrepreneurship,
-            learning opportunities, and collaboration.
-        </p>
-
-        <a href="https://github.com/" class="button"
-           target="_blank" rel="noopener noreferrer">
-            Visit GitHub
-        </a>
+    <div class="info-card">
+      <div class="icon">💳</div>
+      <h3>Fintech & Business</h3>
+      <p>Deeply interested in how technology reshapes finance and creates real business opportunities.</p>
     </div>
+  </div>
 </section>
-
 {% endblock %}
