@@ -1,0 +1,38 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Projects | Wayne Portfolio{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <h1 class="page-title">My <span>Projects</span></h1>
+  <p class="page-subtitle">Things I've built while learning. Each one taught me something new.</p>
+
+  <div class="projects-grid">
+    {% for p in projects %}
+    <div class="card project-card">
+      <div class="icon">{{ p.icon }}</div>
+      <h3>{{ p.title }}</h3>
+      <p>{{ p.description }}</p>
+      <div class="tags">
+        {% for t in p.tech %}<span class="tag">{{ t }}</span>{% endfor %}
+      </div>
+      <div class="btn-row">
+        {% if p.live %}<a href="{{ p.live }}" target="_blank" class="btn-primary btn-sm">Live site</a>{% endif %}
+        {% if p.code %}<a href="{{ p.code }}" target="_blank" class="btn-secondary btn-sm">Code</a>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="card project-card soon">
+      <div class="icon">🚀</div>
+      <h3>More on the way</h3>
+      <p>I'm always building. New projects will show up here.</p>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <a href="{% url 'contact' %}" class="btn-primary">Want to collaborate?</a>
+    <a href="{% url 'story' %}" class="btn-secondary">My Story</a>
+  </div>
+</div>
+{% endblock %}

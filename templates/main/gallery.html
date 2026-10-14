@@ -1,0 +1,41 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Gallery | Wayne Portfolio{% endblock %}
+
+{% block content %}
+
+<div class="wrap">
+  <h1 class="page-title"><span>Gallery</span></h1>
+  <p class="page-subtitle">Moments on the court, in the classroom, and everywhere in between. Tap a photo to enlarge it.</p>
+
+  {% if photos %}
+  <div class="photo-grid">
+    {% for photo in photos %}
+      {% with path='main/gallery/'|add:photo.file %}
+      <figure class="photo">
+        <img src="{% static path %}" alt="{{ photo.caption }}" loading="lazy">
+        <figcaption>{{ photo.caption }}</figcaption>
+      </figure>
+      {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-note">
+    No photos yet. Add images to <code>main/static/main/gallery/</code> and push to GitHub.
+  </div>
+  {% endif %}
+</div>
+
+<div class="lightbox" id="lightbox"><img src="" alt="Enlarged photo"></div>
+
+<script>
+  const lb = document.getElementById('lightbox');
+  const lbImg = lb.querySelector('img');
+  document.querySelectorAll('.photo-grid img').forEach(img => {
+    img.addEventListener('click', () => { lbImg.src = img.src; lb.classList.add('open'); });
+  });
+  lb.addEventListener('click', () => lb.classList.remove('open'));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.classList.remove('open'); });
+</script>
+{% endblock %}

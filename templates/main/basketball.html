@@ -1,0 +1,51 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Basketball | Wayne Portfolio{% endblock %}
+
+{% block content %}
+
+<div class="wrap">
+  <h1 class="page-title">🏀 <span>Basketball</span></h1>
+  <p class="page-subtitle">Captain, competitor, champion. This is the game that taught me how to lead.</p>
+
+  <!-- EDIT these chips with your real details -->
+  <div class="chips">
+    <span class="chip">Team Captain</span>
+    <span class="chip">GPSL Champions 2024–25</span>
+    <span class="chip">Position: Shooting Guard</span>
+    <span class="chip">Jersey #: 8</span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="icon">🏆</div>
+      <h3>GPSL Champions 2024–25</h3>
+      <p>We won the GPSL Basketball Tournament. Months of early mornings, late practices, and belief in each other came together on the biggest stage we'd played on.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🧠</div>
+      <h3>Leading as Captain</h3>
+      <p>Being captain isn't about scoring the most. It's about setting the standard in practice, keeping everyone locked in, and lifting teammates when things go wrong.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🤝</div>
+      <h3>Team First</h3>
+      <p>Chemistry wins games. Learning to trust teammates, communicate on the court, and sacrifice for the group changed how I work in every part of life.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:2.5rem;">
+    <h2>What basketball taught me</h2>
+    <p><strong style="color:#67e8f9;">Discipline:</strong> showing up every day, even when no one is watching.</p>
+    <p><strong style="color:#67e8f9;">Pressure:</strong> staying calm when the game is on the line.</p>
+    <p><strong style="color:#67e8f9;">Leadership:</strong> earning respect through actions, not words.</p>
+    <p><strong style="color:#67e8f9;">Resilience:</strong> losses are lessons, and the next game is a new chance.</p>
+  </div>
+
+  <div class="btn-row">
+    <a href="{% url 'gallery' %}" class="btn-primary">See Photos</a>
+    <a href="{% url 'story' %}" class="btn-secondary">My Full Story</a>
+  </div>
+</div>
+{% endblock %}
