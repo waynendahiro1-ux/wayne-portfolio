@@ -1,0 +1,110 @@
+
+{% extends 'main/base.html' %}
+
+{% block title %}Home | Wayne's Portfolio{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <div class="container">
+        <p class="tag">STUDENT · DEVELOPER · FUTURE ENTREPRENEUR</p>
+
+        <h1>
+            Building ideas into <span>real solutions.</span>
+        </h1>
+
+        <p>
+            I'm Wayne, a student passionate about computer science,
+            business, and technology-driven entrepreneurship.
+            I want to turn ideas into practical digital solutions.
+        </p>
+
+        <a href="#projects" class="button">Explore My Work</a>
+    </div>
+</section>
+
+<section class="section-dark" id="about">
+    <div class="container">
+        <h2 class="section-title">About Me</h2>
+
+        <p>
+            I'm developing my programming, analytical thinking,
+            and problem-solving skills. My goal is to combine
+            technology and business to create solutions that
+            address real-world problems.
+        </p>
+    </div>
+</section>
+
+<section id="skills">
+    <div class="container">
+        <h2 class="section-title">My Skills</h2>
+
+        <p>Technologies and subjects I'm learning and practising.</p>
+
+        <div class="skills">
+            <span class="skill">Python</span>
+            <span class="skill">HTML</span>
+            <span class="skill">CSS</span>
+            <span class="skill">Django</span>
+            <span class="skill">Computer Science</span>
+            <span class="skill">Business</span>
+            <span class="skill">Problem Solving</span>
+        </div>
+    </div>
+</section>
+
+<section class="section-dark" id="projects">
+    <div class="container">
+        <h2 class="section-title">My Projects</h2>
+
+        <p>
+            A place to document my practical work and development
+            as a programmer.
+        </p>
+
+        <div class="cards">
+            <article class="card">
+                <h3>Personal Portfolio</h3>
+                <p>
+                    A Django website built to showcase my skills,
+                    interests, and projects.
+                </p>
+            </article>
+
+            <article class="card">
+                <h3>Student Calculator</h3>
+                <p>
+                    A planned project to practise programming logic
+                    and mathematical calculations.
+                </p>
+            </article>
+
+            <article class="card">
+                <h3>Business Technology</h3>
+                <p>
+                    Exploring digital ideas that could help businesses
+                    solve everyday challenges.
+                </p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section id="contact">
+    <div class="container">
+        <h2 class="section-title">Let's Connect</h2>
+
+        <p>
+            I'm interested in technology, entrepreneurship,
+            learning opportunities, and collaboration.
+        </p>
+
+        <a href="https://github.com/" class="button"
+           target="_blank" rel="noopener noreferrer">
+            Visit GitHub
+        </a>
+    </div>
+</section>
+
+{% endblock %}
