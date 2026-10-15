@@ -1,4 +1,5 @@
 {% extends 'main/base.html' %}
+{% load static %}
 
 {% block title %}About Me | Wayne Portfolio{% endblock %}
 
@@ -27,6 +28,32 @@
     font-size: 1.1rem;
     max-width: 560px;
     line-height: 1.6;
+  }
+
+  .profile-card {
+    display: flex;
+    gap: 1.8rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.6rem;
+  }
+
+  .profile-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(34, 211, 238, 0.5);
+    flex-shrink: 0;
+  }
+
+  .profile-info {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .profile-info h2 {
+    margin-bottom: 0.3rem;
   }
 
   .about-grid {
@@ -208,6 +235,21 @@
     </p>
   </div>
 
+  <!-- Profile card: photo, full name, school -->
+  <div class="info-card profile-card">
+    <img src="{% static 'main/gallery/wayne.jpg' %}" alt="Wayne" class="profile-photo">
+    <div class="profile-info">
+      <h2>Wayne Ndahiro Imena</h2>
+          <p style="margin-bottom:.4rem;">
+            Grade 12 student at <strong style="color:#67e8f9;">Path To Success</strong>, Kigali, Rwanda.
+          </p>
+        <p style="margin-bottom:.9rem; color:#94a3b8;">
+          I've been at Path To Success for 3 years, and it's where I found both my love for coding and my leadership on the court. Balancing classes, training, and building projects like this website has taught me discipline and time management.
+        </p>
+        <a href="https://www.pathtosuccess.co.rw/" target="_blank" rel="noopener" class="btn-secondary" style="margin-left:0; padding:.5rem 1.1rem; font-size:.9rem;">Visit school website →</a>
+    </div>
+  </div>
+
   <!-- Main bio + facts -->
   <div class="about-grid">
     <div class="info-card">
@@ -216,7 +258,7 @@
         My name is Wayne. I'm a Grade 12 student living in Kigali, Rwanda. I built this portfolio with Django as part of my personal project, and I genuinely enjoy turning ideas into working web applications.
       </p>
       <p>
-        Outside of class and coding, I'm the captain of our school basketball team. We won the 2024–25 GPSL Basketball Tournament, which still feels unreal. That experience taught me a lot about leadership, pressure, and showing up every day.
+        Outside of class and coding, I'm the captain of our school basketball team. We won the 2024–25 Gasabo Private School League (GPSL) Basketball Tournament, which still feels unreal. That experience taught me a lot about leadership, pressure, and showing up every day.
       </p>
       <p>
         I'm especially interested in fintech and how technology can create real business opportunities. Whether it's a clean web app or a smart financial tool, I want to build things people actually use.
@@ -229,6 +271,10 @@
         <li>
           <span class="label">Location</span>
           <span class="value">Kigali, Rwanda</span>
+        </li>
+        <li>
+          <span class="label">School</span>
+          <span class="value">Path To Success</span>
         </li>
         <li>
           <span class="label">Education</span>
@@ -244,7 +290,7 @@
         </li>
         <li>
           <span class="label">Achievement</span>
-          <span class="value">2024–25 GPSL Champions</span>
+          <span class="value">2024–25 GPSL (Gasabo Private School League) Champions</span>
         </li>
         <li>
           <span class="label">Focus</span>
@@ -263,7 +309,7 @@
     <a href="{% url 'basketball' %}" class="highlight-card" style="display:block;">
       <div class="icon">🏀</div>
       <h3>On the Court</h3>
-      <p>Captain of the basketball team and proud winner of the 2024–25 GPSL Tournament. Leadership and teamwork under pressure.</p>
+      <p>Captain of the basketball team and proud winner of the 2024–25 Gasabo Private School League (GPSL) Tournament. Leadership and teamwork under pressure.</p>
       <p style="color:#67e8f9; font-weight:600; margin-top:.8rem;">Read the basketball story →</p>
     </a>
 
@@ -284,7 +330,7 @@
   <div class="cta-box">
     <h2>Want to talk?</h2>
     <p>
-      Whether it's about basketbal, code, fintech ideas, or just saying hi — I'm always down to connect.
+      Whether it's about basketball, code, fintech ideas, or just saying hi — I'm always down to connect.
     </p>
     <div>
       <a href="{% url 'contact' %}" class="btn-primary">Get in Touch</a>
