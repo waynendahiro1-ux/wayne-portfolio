@@ -11,13 +11,8 @@ def about(request):
 def contact(request):
     return render(request, 'main/contact.html')
 
-def story(request):
-    return render(request, 'main/story.html')
-
-
 def basketball(request):
     return render(request, 'main/basketball.html')
-
 
 def gallery(request):
     folder = Path(__file__).resolve().parent / 'static' / 'main' / 'gallery'

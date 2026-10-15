@@ -213,7 +213,7 @@
     <div class="info-card">
       <h2>👋 Who I am</h2>
       <p>
-        My name is Wayne. I'm a Grade 12 student living in Kigali, Rwanda. I built this portfolio with Django as part of my school project, and I genuinely enjoy turning ideas into working web applications.
+        My name is Wayne. I'm a Grade 12 student living in Kigali, Rwanda. I built this portfolio with Django as part of my personal project, and I genuinely enjoy turning ideas into working web applications.
       </p>
       <p>
         Outside of class and coding, I'm the captain of our school basketball team. We won the 2024–25 GPSL Basketball Tournament, which still feels unreal. That experience taught me a lot about leadership, pressure, and showing up every day.
@@ -260,11 +260,12 @@
 
   <!-- Highlights -->
   <div class="highlight-row">
-    <div class="highlight-card">
+    <a href="{% url 'basketball' %}" class="highlight-card" style="display:block;">
       <div class="icon">🏀</div>
       <h3>On the Court</h3>
       <p>Captain of the basketball team and proud winner of the 2024–25 GPSL Tournament. Leadership and teamwork under pressure.</p>
-    </div>
+      <p style="color:#67e8f9; font-weight:600; margin-top:.8rem;">Read the basketball story →</p>
+    </a>
 
     <div class="highlight-card">
       <div class="icon">💻</div>
