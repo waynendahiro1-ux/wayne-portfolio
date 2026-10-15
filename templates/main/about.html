@@ -56,6 +56,17 @@
     margin-bottom: 0.3rem;
   }
 
+  .school-link {
+    color: #67e8f9;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .school-link:hover {
+    color: #a78bfa;
+  }
+
   .about-grid {
     display: grid;
     grid-template-columns: 1.4fr 1fr;
@@ -240,13 +251,14 @@
     <img src="{% static 'main/gallery/wayne.jpg' %}" alt="Wayne" class="profile-photo">
     <div class="profile-info">
       <h2>Wayne Ndahiro Imena</h2>
-          <p style="margin-bottom:.4rem;">
-            Grade 12 student at <strong style="color:#67e8f9;">Path To Success</strong>, Kigali, Rwanda.
-          </p>
-        <p style="margin-bottom:.9rem; color:#94a3b8;">
-          I've been at Path To Success for 3 years, and it's where I found both my love for coding and my leadership on the court. Balancing classes, training, and building projects like this website has taught me discipline and time management.
-        </p>
-        <a href="https://www.pathtosuccess.co.rw/" target="_blank" rel="noopener" class="btn-secondary" style="margin-left:0; padding:.5rem 1.1rem; font-size:.9rem;">Visit school website →</a>
+      <p style="margin-bottom:.4rem;">
+        Grade 12 student at
+        <a href="https://www.pathtosuccess.co.rw/" target="_blank" rel="noopener" class="school-link">Path To Success</a>,
+        Kigali, Rwanda.
+      </p>
+      <p style="margin-bottom:0; color:#94a3b8;">
+        I've been at Path To Success for 3 years, and it's where I found both my love for coding and my leadership on the court. Balancing classes, training, and building projects like this website has taught me discipline and time management.
+      </p>
     </div>
   </div>
 
@@ -274,7 +286,7 @@
         </li>
         <li>
           <span class="label">School</span>
-          <span class="value">Path To Success</span>
+          <span class="value"><a href="https://www.pathtosuccess.co.rw/" target="_blank" rel="noopener">Path To Success</a> (3 years)</span>
         </li>
         <li>
           <span class="label">Education</span>
