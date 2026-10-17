@@ -1,12 +1,17 @@
 <nav>
     <div class="container">
         <a href="{% url 'home' %}" class="logo">Wayne Portfolio</a>
+        <input type="checkbox" id="navCheck" class="nav-check">
+        <label for="navCheck" class="nav-toggle" aria-label="Toggle menu">
+            <span class="open-icon">☰</span><span class="close-icon">✕</span>
+        </label>
         <div class="nav-links">
             <a href="{% url 'home' %}">Home</a>
             <a href="{% url 'about' %}">About Me</a>
-            <a href="{% url 'contact' %}">Contact</a>
+            <a href="{% url 'basketball' %}">Basketball</a>
             <a href="{% url 'gallery' %}">Gallery</a>
             <a href="{% url 'projects' %}">Projects</a>
+            <a href="{% url 'contact' %}">Contact</a>
         </div>
     </div>
 </nav>

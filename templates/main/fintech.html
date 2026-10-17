@@ -1,0 +1,345 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Fintech Focus | Wayne Portfolio{% endblock %}
+
+{% block content %}
+<style>
+  .fintech-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2.5rem 1rem 3.5rem;
+  }
+
+  /* ---------- Header ---------- */
+  .fintech-header {
+    margin-bottom: 2rem;
+  }
+
+  .summit-badge {
+    display: inline-block;
+    background: rgba(34, 211, 238, 0.12);
+    color: #67e8f9;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .fintech-title {
+    font-size: clamp(2rem, 5vw, 2.7rem);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.6rem;
+    letter-spacing: -0.02em;
+  }
+
+  .fintech-subtitle {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    max-width: 620px;
+    line-height: 1.6;
+  }
+
+  /* ---------- Layout grids ---------- */
+  .fintech-grid-top {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+    margin-bottom: 1.5rem;
+  }
+
+  .fintech-grid-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 800px) {
+    .fintech-grid-top,
+    .fintech-grid-bottom {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---------- Cards ---------- */
+  .fintech-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    border-radius: 1rem;
+    padding: 1.7rem;
+    transition: all 0.3s ease;
+  }
+
+  .fintech-card:hover {
+    border-color: rgba(56, 189, 248, 0.28);
+    box-shadow: 0 12px 30px rgba(34, 211, 238, 0.07);
+  }
+
+  .fintech-card h2 {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 650;
+    margin-bottom: 1rem;
+  }
+
+  .fintech-card p {
+    color: #cbd5e1;
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+
+  .fintech-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .fintech-quote {
+    border-left: 3px solid #22d3ee;
+    background: rgba(34, 211, 238, 0.06);
+    border-radius: 0 0.6rem 0.6rem 0;
+    padding: 0.9rem 1.1rem;
+    margin: 1.3rem 0;
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+
+  /* ---------- Summit card ---------- */
+  .summit-photo {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    border-radius: 0.8rem;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    margin: 0 auto 1.3rem;
+  }
+
+  .summit-details {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+  }
+
+  .summit-details li {
+    display: flex;
+    gap: 0.8rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .summit-details li:last-child {
+    border-bottom: none;
+  }
+
+  .summit-details .label {
+    color: #fff;
+    font-weight: 600;
+    min-width: 80px;
+  }
+
+  .summit-details .value {
+    color: #94a3b8;
+  }
+
+  /* ---------- Lists ---------- */
+  .check-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .check-list li {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .check-list li:last-child {
+    border-bottom: none;
+  }
+
+  .check-list li::before {
+    content: "✓";
+    color: #22d3ee;
+    font-weight: 700;
+  }
+
+  .after-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+  }
+
+  .after-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .after-list li:last-child {
+    border-bottom: none;
+  }
+
+  .status-pill {
+    background: rgba(148, 163, 184, 0.12);
+    color: #94a3b8;
+    border-radius: 999px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .small-note {
+    color: #94a3b8;
+    font-size: 0.92rem;
+    font-style: italic;
+  }
+
+  /* ---------- Buttons ---------- */
+  .fintech-cta {
+    text-align: center;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.7rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    display: inline-block;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: #67e8f9;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    border: 1px solid rgba(34, 211, 238, 0.4);
+    transition: all 0.25s ease;
+    display: inline-block;
+    margin-left: 0.7rem;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(34, 211, 238, 0.1);
+    border-color: #22d3ee;
+  }
+
+  @media (max-width: 480px) {
+    .btn-secondary {
+      margin-left: 0;
+      margin-top: 0.7rem;
+    }
+  }
+</style>
+
+<div class="fintech-page">
+  <!-- Header -->
+  <div class="fintech-header">
+    <span class="summit-badge">💳 Africa Fintech Summit 2026</span>
+    <h1 class="fintech-title">My Focus: Fintech</h1>
+    <p class="fintech-subtitle">
+      Where technology meets money, and how it can create real opportunities across Africa.
+    </p>
+  </div>
+
+  <!-- Top row: story + summit -->
+  <div class="fintech-grid-top">
+    <div class="fintech-card">
+      <h2>💡 Why Fintech?</h2>
+      <p>
+        Think about how often you use money in a single day: paying for a snack, sending airtime, splitting a bill with friends. Now imagine all of that happening in seconds from a phone, with no queue, no paperwork, and no bank branch nearby. That is fintech, and here in Kigali I see it working every day.
+      </p>
+      <p>
+        Fintech means financial technology: mobile money, online payments, digital savings, and apps that make borrowing and investing simpler. For millions of people across Africa, a phone is the first and only way they can reach financial services. When M-Pesa launched in Kenya in 2007, it showed the world that a simple idea built on a basic phone could change how a whole continent moves money.
+      </p>
+
+      <div class="fintech-quote">
+        A good financial app doesn't just move money. It gives people access, trust, and a chance to grow.
+      </div>
+
+      <p>
+        What pulls me in is that fintech sits where my interests meet. I love coding, and my A* in IGCSE Computer Science taught me how to break a big problem into small, logical steps. I also love the business side: understanding what people need and building something that solves it. As a basketball captain, I've learned that great results come from teamwork, preparation, and staying calm under pressure, and I think building products works the same way.
+      </p>
+      <p>
+        I'm still at the start of this journey, and this portfolio is my first step. My goal is to keep learning, build real projects, and one day create a financial tool that people actually use and trust. That is why I'm excited to attend the Africa Fintech Summit.
+      </p>
+    </div>
+
+    <div class="fintech-card">
+      <h2>🌍 Africa Fintech Summit</h2>
+      <img src="{% static 'main/images/africa-fintech-summit-attending.png' %}" alt="Wayne Ndahiro, attending the Africa Fintech Summit 2026 in Kigali (#AFTSKigali26)" class="summit-photo">
+      <ul class="summit-details">
+        <li><span class="label">Date</span><span class="value">18–20 November 2026</span></li>
+        <li><span class="label">Location</span><span class="value">Kigali Convention Centre, Rwanda</span></li>
+        <li><span class="label">Hashtag</span><span class="value">#AFTSKigali26</span></li>
+      </ul>
+      <p style="font-size:0.95rem;">
+        I'm attending to learn from people working in the industry and to see where fintech in Africa is heading.
+      </p>
+    </div>
+  </div>
+
+  <!-- Bottom row: goals + after summit -->
+  <div class="fintech-grid-bottom">
+    <div class="fintech-card">
+      <h2>🎯 What I Want to Learn</h2>
+      <ul class="check-list">
+        <li>How digital payments and mobile money work</li>
+        <li>What skills I should build next</li>
+        <li>How young developers can get started in fintech</li>
+        <li>Who is building what in the industry</li>
+      </ul>
+    </div>
+
+    <div class="fintech-card">
+      <h2>📝 After the Summit</h2>
+      <ul class="after-list">
+        <li>Speakers <span class="status-pill">Coming soon</span></li>
+        <li>What I learned <span class="status-pill">Coming soon</span></li>
+        <li>People I met <span class="status-pill">Coming soon</span></li>
+        <li>My next steps <span class="status-pill">Coming soon</span></li>
+      </ul>
+      <p class="small-note">I'll update this section after attending.</p>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="fintech-cta">
+    <a href="{% url 'about' %}" class="btn-primary">Back to About Me</a>
+    <a href="{% url 'contact' %}" class="btn-secondary">Get in Touch</a>
+  </div>
+</div>
+{% endblock %}

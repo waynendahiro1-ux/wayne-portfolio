@@ -248,7 +248,7 @@
 
   <!-- Profile card: photo, full name, school -->
   <div class="info-card profile-card">
-    <img src="{% static 'main/gallery/wayne.jpg' %}" alt="Wayne" class="profile-photo">
+    <img src="{% static 'main/images/wayne.jpg' %}" alt="Wayne" class="profile-photo">
     <div class="profile-info">
       <h2>Wayne Ndahiro Imena</h2>
       <p style="margin-bottom:.4rem;">
@@ -331,11 +331,12 @@
       <p>A* in IGCSE Computer Science. Building real projects with Django and constantly leveling up my skills.</p>
     </div>
 
-    <div class="highlight-card">
+    <a href="{% url 'fintech' %}" class="highlight-card" style="display:block;">
       <div class="icon">💳</div>
       <h3>Future Focus</h3>
       <p>Deeply interested in fintech and the business side of technology. Looking for ways tech can create real impact.</p>
-    </div>
+      <p style="color:#67e8f9; font-weight:600; margin-top:.8rem;">Read more →</p>
+    </a>
   </div>
 
   <!-- CTA -->

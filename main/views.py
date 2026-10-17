@@ -14,6 +14,9 @@ def contact(request):
 def basketball(request):
     return render(request, 'main/basketball.html')
 
+def fintech(request):
+    return render(request, 'main/fintech.html')
+
 def gallery(request):
     folder = Path(__file__).resolve().parent / 'static' / 'main' / 'gallery'
     exts = {'.jpg', '.jpeg', '.png', '.webp'}
