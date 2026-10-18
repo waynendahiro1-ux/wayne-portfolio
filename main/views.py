@@ -2,6 +2,7 @@ import json
 import logging
 import urllib.error
 import urllib.request
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 from django.conf import settings
@@ -205,6 +206,103 @@ def savings_goal(request):
     })
 
 
+# ---------- Fintech project 2: Loan and Interest Calculator ----------
+
+def read_rate(text, label, errors):
+    """Read an interest rate like 18 or 18.5. Adds a friendly error and returns None if wrong."""
+    text = text.replace(' ', '').replace(',', '.')   # allow "18,5" as well as "18.5"
+
+    if text == '':
+        errors.append(f"Please enter {label}.")
+        return None
+
+    # Allow digits with at most ONE dot. This rejects letters and minus signs.
+    if len(text) > 8 or not text.replace('.', '', 1).isdecimal():
+        errors.append(f"{label} must be a number like 18 or 18.5 (no letters or minus signs).")
+        return None
+
+    return Decimal(text)
+
+
+def to_rwf(amount):
+    """Round a Decimal amount to the nearest whole franc and return a normal whole number."""
+    return int(amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+
+
+def loan_calculator(request):
+    # What the visitor typed, so the boxes keep their values after pressing Calculate
+    values = {'amount': '', 'rate': '', 'months': ''}
+    errors = []
+    result = None
+
+    if request.method == 'POST':
+        values['amount'] = request.POST.get('amount', '').strip()
+        values['rate'] = request.POST.get('rate', '').strip()
+        values['months'] = request.POST.get('months', '').strip()
+
+        # 1. Read and check each box
+        amount = read_whole_number(values['amount'], 'Loan amount', errors, required=True)
+        rate = read_rate(values['rate'], 'Yearly interest rate', errors)
+        months = read_whole_number(values['months'], 'Loan length in months', errors, required=True)
+
+        # 2. Check the limits
+        if amount == 0:
+            errors.append("Loan amount must be more than 0.")
+        if months == 0:
+            errors.append("Loan length must be at least 1 month.")
+        if months is not None and months > 360:
+            errors.append("Please use 360 months (30 years) or less.")
+        if rate is not None and rate > 100:
+            errors.append("Yearly interest rate must be 100% or less.")
+
+        # 3. If everything is fine, do the maths
+        if not errors:
+            # Decimal is safer than normal decimals for money maths (no tiny rounding surprises)
+            r = rate / Decimal(1200)        # monthly rate: yearly % / 12 months / 100
+
+            if r == 0:
+                payment = Decimal(amount) / months      # 0% interest: just split the loan equally
+            else:
+                # Standard loan formula:  payment = P * r / (1 - (1 + r) ** -n)
+                payment = Decimal(amount) * r / (1 - (1 + r) ** -months)
+
+            # Build the repayment table, one row per month
+            balance = Decimal(amount)       # how much is still owed
+            rows = []
+            for month in range(1, months + 1):
+                interest = balance * r              # interest is charged on what is still owed
+                principal = payment - interest      # the rest of the payment pays off the loan
+                balance = balance - principal
+                if month == months:
+                    balance = Decimal(0)            # remove tiny leftover from rounding
+                rows.append({
+                    'month': month,
+                    'payment': to_rwf(payment),
+                    'interest': to_rwf(interest),
+                    'principal': to_rwf(principal),
+                    'balance': to_rwf(balance),
+                })
+
+            total_paid = payment * months
+            total_interest = total_paid - amount
+
+            result = {
+                'amount': amount,
+                'months': months,
+                'monthly_payment': to_rwf(payment),
+                'total_paid': to_rwf(total_paid),
+                'total_interest': to_rwf(total_interest),
+                'interest_share': to_rwf(total_interest * 100 / total_paid),   # % of what you pay that is interest
+                'rows': rows,
+            }
+
+    return render(request, 'main/project_loan_calculator.html', {
+        'values': values,
+        'errors': errors,
+        'result': result,
+    })
+
+
 def projects(request):
     projects = [
         {
@@ -221,6 +319,14 @@ def projects(request):
             'description': 'Enter a target in RWF and either what you save each month or how many months you have. It works out the rest. For learning, not financial advice.',
             'tech': ['Python', 'Django', 'Fintech'],
             'page': 'savings_goal',     # opens the demo page on this site
+            'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
+        },
+        {
+            'icon': '🏦',
+            'title': 'Loan and Interest Calculator',
+            'description': 'Enter a loan amount, a yearly interest rate and a length in months. See the monthly payment, the total interest and a month-by-month repayment table. For learning, not financial advice.',
+            'tech': ['Python', 'Django', 'Fintech'],
+            'page': 'loan_calculator',   # opens the demo page on this site
             'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
         },
     ]

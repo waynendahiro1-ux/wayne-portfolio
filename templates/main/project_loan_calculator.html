@@ -1,0 +1,220 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Loan and Interest Calculator | Wayne Portfolio{% endblock %}
+
+{% block content %}
+<style>
+  .lc-page { max-width: 760px; }
+
+  .lc-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+
+  .lc-section { margin-bottom: 1.5rem; }
+  .lc-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
+
+  /* Warning box: learning only */
+  .lc-note {
+    background: rgba(250, 204, 21, 0.08);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    color: #fde68a;
+    border-radius: .7rem;
+    padding: .8rem 1rem;
+    font-size: .92rem;
+    margin-bottom: 1.4rem;
+  }
+
+  /* Form */
+  .lc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .lc-field { margin-bottom: 1rem; }
+  .lc-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
+  .lc-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .lc-field input {
+    width: 100%;
+    padding: .75rem 1rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: .6rem;
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+  .lc-field input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
+  .lc-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
+
+  /* Errors */
+  .lc-errors {
+    background: rgba(239, 68, 68, .1);
+    border: 1px solid rgba(239, 68, 68, .45);
+    color: #fecaca;
+    border-radius: .7rem;
+    padding: .8rem 1rem .8rem 2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Result */
+  .lc-result {
+    margin-top: 1.5rem;
+    background: rgba(34, 211, 238, .07);
+    border: 1px solid rgba(34, 211, 238, .3);
+    border-radius: .9rem;
+    padding: 1.4rem;
+  }
+  .lc-result h3 { color: #fff; font-size: 1.1rem; margin-bottom: .5rem; }
+  .lc-big { font-size: clamp(1.7rem, 6vw, 2.3rem); font-weight: 800; color: #22d3ee; margin: .2rem 0 .8rem; }
+  .lc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: 1rem; }
+  .lc-stat { background: #0f172a; border: 1px solid #334155; border-radius: .7rem; padding: .8rem 1rem; }
+  .lc-stat span { display: block; color: #94a3b8; font-size: .82rem; }
+  .lc-stat strong { color: #fff; font-size: 1.1rem; }
+  .lc-bar { background: #0f172a; border-radius: 9999px; height: 12px; overflow: hidden; margin: .8rem 0 .3rem; }
+  .lc-bar-fill { background: linear-gradient(135deg, #8b5cf6, #3b82f6); height: 100%; }
+
+  /* Repayment table (scrolls sideways on small phones instead of breaking the page) */
+  .lc-details { margin-top: 1.2rem; }
+  .lc-details summary { cursor: pointer; color: #67e8f9; font-weight: 600; margin-bottom: .8rem; }
+  .lc-table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border: 1px solid #334155; border-radius: .7rem; }
+  .lc-table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 480px; }
+  .lc-table th { position: sticky; top: 0; background: #0f172a; color: #67e8f9; text-align: right; padding: .6rem .8rem; font-weight: 600; }
+  .lc-table td { text-align: right; padding: .5rem .8rem; color: #cbd5e1; border-top: 1px solid #334155; }
+  .lc-table th:first-child, .lc-table td:first-child { text-align: left; }
+
+  .lc-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .lc-learn li { margin-bottom: .5rem; }
+  .lc-formula { background: #0f172a; border: 1px solid #334155; border-radius: .6rem; padding: .8rem 1rem; color: #e2e8f0; font-family: Consolas, monospace; font-size: .95rem; overflow-x: auto; margin-bottom: 1rem; }
+
+  @media (max-width: 600px) {
+    .lc-row { grid-template-columns: 1fr; gap: 0; }
+    .lc-stats { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap lc-page">
+  <a href="{% url 'projects' %}" class="lc-back">← Back to Projects</a>
+  <h1 class="page-title">Loan and Interest <span>Calculator</span></h1>
+  <p class="page-subtitle">A fintech project: see what a loan really costs, month by month.</p>
+
+  <!-- 1. What it does -->
+  <div class="card lc-section">
+    <h2>1. What it does</h2>
+    <p>You type in a loan amount in Rwandan francs (RWF), a yearly interest rate and how many months you will take to repay it. The calculator shows:</p>
+    <p>• your <strong>monthly payment</strong><br>
+       • the <strong>total interest</strong> you would pay<br>
+       • the <strong>total</strong> you would pay back<br>
+       • a <strong>repayment table</strong> showing, for every month, how much of your payment is interest and how much pays off the loan</p>
+    <p>It assumes equal monthly payments and no extra fees.</p>
+  </div>
+
+  <!-- 2. The demo -->
+  <div class="card lc-section" id="demo">
+    <h2>2. Try it</h2>
+
+    <div class="lc-note">
+      ⚠️ For learning only. This is <strong>not financial advice</strong>. It only uses the numbers you type here, nothing is saved, and no real money or accounts are involved. Real lenders may charge fees and calculate interest differently.
+    </div>
+
+    {% if errors %}
+    <ul class="lc-errors">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" action="{% url 'loan_calculator' %}#demo">
+      {% csrf_token %}
+
+      <div class="lc-row">
+        <div class="lc-field">
+          <label for="amount">Loan amount (RWF)</label>
+          <input type="text" inputmode="numeric" id="amount" name="amount" value="{{ values.amount }}" placeholder="e.g. 1000000">
+        </div>
+        <div class="lc-field">
+          <label for="rate">Yearly interest rate (%)</label>
+          <input type="text" inputmode="decimal" id="rate" name="rate" value="{{ values.rate }}" placeholder="e.g. 18">
+          <small>Use 0 for a loan with no interest.</small>
+        </div>
+      </div>
+
+      <div class="lc-field">
+        <label for="months">Loan length (months)</label>
+        <input type="text" inputmode="numeric" id="months" name="months" value="{{ values.months }}" placeholder="e.g. 12">
+        <small>Between 1 and 360 months.</small>
+      </div>
+
+      <button type="submit" class="btn-primary lc-button">Calculate</button>
+    </form>
+
+    {% if result %}
+    <div class="lc-result">
+      <h3>Your monthly payment</h3>
+      <div class="lc-big">{{ result.monthly_payment|floatformat:"0g" }} RWF</div>
+
+      <div class="lc-stats">
+        <div class="lc-stat"><span>Loan amount</span><strong>{{ result.amount|floatformat:"0g" }} RWF</strong></div>
+        <div class="lc-stat"><span>Number of payments</span><strong>{{ result.months }}</strong></div>
+        <div class="lc-stat"><span>Total interest</span><strong>{{ result.total_interest|floatformat:"0g" }} RWF</strong></div>
+        <div class="lc-stat"><span>Total you pay back</span><strong>{{ result.total_paid|floatformat:"0g" }} RWF</strong></div>
+      </div>
+
+      <div class="lc-bar"><div class="lc-bar-fill" style="width: {{ result.interest_share }}%;"></div></div>
+      <small style="color:#94a3b8;">{{ result.interest_share }}% of everything you pay back is interest.</small>
+
+      <details class="lc-details" open>
+        <summary>Repayment table (click to hide or show)</summary>
+        <div class="lc-table-wrap">
+          <table class="lc-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Payment</th>
+                <th>Interest</th>
+                <th>Paid off</th>
+                <th>Still owed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in result.rows %}
+              <tr>
+                <td>{{ row.month }}</td>
+                <td>{{ row.payment|floatformat:"0g" }}</td>
+                <td>{{ row.interest|floatformat:"0g" }}</td>
+                <td>{{ row.principal|floatformat:"0g" }}</td>
+                <td>{{ row.balance|floatformat:"0g" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <p style="margin-top:.8rem; font-size:.9rem; color:#94a3b8;">All amounts are in RWF and rounded to the nearest franc, so small differences of 1 RWF can appear between rows and totals.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 3. Why it matters -->
+  <div class="card lc-section">
+    <h2>3. Why it matters for fintech</h2>
+    <p>Lending is one of the biggest parts of fintech. Mobile loans, buy-now-pay-later and digital lenders all need to work out a clear monthly payment and show the customer what the loan will cost. A tool that explains interest simply helps people borrow with their eyes open. Showing the full repayment table builds trust, because the customer can see exactly where every franc goes.</p>
+  </div>
+
+  <!-- 4. What I learned -->
+  <div class="card lc-section">
+    <h2>4. What I learned</h2>
+    <p>The monthly payment comes from this standard loan formula (P = loan amount, r = monthly interest rate, n = number of months):</p>
+    <div class="lc-formula">payment = P × r ÷ (1 − (1 + r)<sup>−n</sup>)</div>
+    <ul class="lc-learn">
+      <li>Interest is charged on the amount still owed, so early payments are mostly interest and later payments mostly pay off the loan.</li>
+      <li>How to use Python's <code>Decimal</code> for money maths instead of normal decimals.</li>
+      <li>How to build a repayment table with a loop and show it in a Django template.</li>
+      <li>How to handle the 0% interest case separately, so the formula never divides by zero.</li>
+      <li>How to keep a long table usable on a phone with a scrolling box and a show/hide section, with no JavaScript.</li>
+    </ul>
+  </div>
+
+  <!-- 5. Code -->
+  <div class="card lc-section">
+    <h2>5. See the code</h2>
+    <p>The full code is open on GitHub.</p>
+    <div class="btn-row">
+      <a href="https://github.com/waynendahiro1-ux/wayne-portfolio" target="_blank" class="btn-primary">View code on GitHub</a>
+      <a href="{% url 'projects' %}" class="btn-secondary">Back to Projects</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

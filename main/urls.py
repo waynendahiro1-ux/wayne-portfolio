@@ -11,4 +11,6 @@ urlpatterns = [
     path('projects/', views.projects, name='projects'),
     # Fintech project 1
     path('projects/savings-goal/', views.savings_goal, name='savings_goal'),
+    # Fintech project 2
+    path('projects/loan-calculator/', views.loan_calculator, name='loan_calculator'),
 ]
