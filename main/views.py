@@ -303,6 +303,152 @@ def loan_calculator(request):
     })
 
 
+# ---------- Fintech project 3: Bill Splitter ----------
+
+def read_tip(text, errors):
+    """Read an optional tip percentage. A blank box means 0%."""
+    if text.strip() == '':
+        return Decimal(0)
+    tip = read_rate(text, 'Tip percentage', errors)     # reuse the rate reader from project 2
+    if tip is not None and tip > 100:
+        errors.append("Tip percentage must be 100% or less.")
+        return None
+    return tip
+
+
+def share_out(amount, weights):
+    """Share a whole number of francs between people in proportion to their weights,
+    so that the shares add up to EXACTLY the amount (no franc lost to rounding).
+    This is called the 'largest remainder' method."""
+    total_weight = sum(weights)
+
+    # Step 1: give everyone their share rounded DOWN to a whole franc
+    shares = [amount * w // total_weight for w in weights]
+
+    # Step 2: some francs are left over. Give one extra franc each to the people
+    # whose exact share had the biggest fraction cut off (ties go to the first person).
+    left_over = amount - sum(shares)
+    order = sorted(range(len(weights)), key=lambda i: (-(amount * weights[i] % total_weight), i))
+    for i in order[:left_over]:
+        shares[i] += 1
+    return shares
+
+
+def bill_splitter(request):
+    # What the visitor typed, so the boxes keep their values after pressing a button
+    equal_values = {'total': '', 'people': '', 'tip': ''}
+    split_rows = [{'n': i, 'name': '', 'amount': ''} for i in range(1, 7)]   # 6 rows
+    split_values = {'tip': '', 'shared': ''}
+    equal_errors = []
+    split_errors = []
+    equal_result = None
+    split_result = None
+
+    if request.method == 'POST':
+        mode = request.POST.get('mode', '')     # which form was sent: 'equal' or 'unequal'
+
+        # ----- Form 1: equal split -----
+        if mode == 'equal':
+            equal_values['total'] = request.POST.get('total', '').strip()
+            equal_values['people'] = request.POST.get('people', '').strip()
+            equal_values['tip'] = request.POST.get('tip', '').strip()
+
+            total = read_whole_number(equal_values['total'], 'Bill total', equal_errors, required=True)
+            people = read_whole_number(equal_values['people'], 'Number of people', equal_errors, required=True)
+            tip = read_tip(equal_values['tip'], equal_errors)
+
+            if total == 0:
+                equal_errors.append("Bill total must be more than 0.")
+            if people is not None and not 2 <= people <= 50:
+                equal_errors.append("Number of people must be between 2 and 50.")
+
+            if not equal_errors:
+                tip_amount = to_rwf(Decimal(total) * tip / Decimal(100))
+                grand_total = total + tip_amount
+
+                # Whole-number division: everyone pays 'base'. The 'remainder' francs
+                # that do not divide evenly are paid one each by the first few people.
+                base, remainder = divmod(grand_total, people)
+                rows = []
+                for i in range(1, people + 1):
+                    rows.append({
+                        'person': f"Person {i}",
+                        'pays': base + 1 if i <= remainder else base,
+                    })
+
+                equal_result = {
+                    'total': total,
+                    'tip_amount': tip_amount,
+                    'grand_total': grand_total,
+                    'people': people,
+                    'base': base,                   # what most people pay
+                    'base_plus': base + 1,          # what the first few pay when it does not divide evenly
+                    'remainder': remainder,
+                    'rows': rows,
+                    'check': sum(row['pays'] for row in rows),   # must equal grand_total
+                }
+
+        # ----- Form 2: unequal split -----
+        elif mode == 'unequal':
+            split_values['tip'] = request.POST.get('utip', '').strip()
+            split_values['shared'] = request.POST.get('shared', '').strip()
+
+            people_list = []    # (name, amount) for every row that was filled in
+            for row in split_rows:
+                i = row['n']
+                row['name'] = request.POST.get(f'name{i}', '').strip()[:20]     # keep names short
+                row['amount'] = request.POST.get(f'amount{i}', '').strip()
+
+                if row['name'] == '' and row['amount'] == '':
+                    continue    # empty row, skip it
+
+                amount = read_whole_number(row['amount'], f"Amount for row {i}", split_errors, required=True)
+                if amount == 0:
+                    split_errors.append(f"Amount for row {i} must be more than 0.")
+                elif amount is not None:
+                    people_list.append((row['name'] or f"Person {i}", amount))
+
+            tip = read_tip(split_values['tip'], split_errors)
+            shared = read_whole_number(split_values['shared'], 'Shared cost', split_errors)
+            if shared is None:
+                shared = 0
+
+            if len(people_list) < 2 and not split_errors:
+                split_errors.append("Please fill in at least 2 rows (a name is optional, an amount is needed).")
+
+            if not split_errors:
+                amounts = [amount for name, amount in people_list]
+                items_total = sum(amounts)
+
+                tip_amount = to_rwf(Decimal(items_total) * tip / Decimal(100))
+                extras = tip_amount + shared                # tip and shared cost, split by share
+                extra_shares = share_out(extras, amounts)   # exact, no franc lost
+
+                rows = []
+                for (name, amount), extra in zip(people_list, extra_shares):
+                    rows.append({'name': name, 'ordered': amount, 'extra': extra, 'pays': amount + extra})
+
+                split_result = {
+                    'items_total': items_total,
+                    'tip_amount': tip_amount,
+                    'shared': shared,
+                    'extras_total': extras,              # tip + shared cost (used in the table footer)
+                    'grand_total': items_total + extras,
+                    'rows': rows,
+                    'check': sum(row['pays'] for row in rows),   # must equal grand_total
+                }
+
+    return render(request, 'main/project_bill_splitter.html', {
+        'equal_values': equal_values,
+        'split_rows': split_rows,
+        'split_values': split_values,
+        'equal_errors': equal_errors,
+        'split_errors': split_errors,
+        'equal_result': equal_result,
+        'split_result': split_result,
+    })
+
+
 def projects(request):
     projects = [
         {
@@ -327,6 +473,14 @@ def projects(request):
             'description': 'Enter a loan amount, a yearly interest rate and a length in months. See the monthly payment, the total interest and a month-by-month repayment table. For learning, not financial advice.',
             'tech': ['Python', 'Django', 'Fintech'],
             'page': 'loan_calculator',   # opens the demo page on this site
+            'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
+        },
+        {
+            'icon': '🧾',
+            'title': 'Bill Splitter',
+            'description': 'Split a bill equally, or by what each person ordered, with an optional tip and shared cost. The shares always add up exactly. For learning, not financial advice.',
+            'tech': ['Python', 'Django', 'Fintech'],
+            'page': 'bill_splitter',     # opens the demo page on this site
             'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
         },
     ]

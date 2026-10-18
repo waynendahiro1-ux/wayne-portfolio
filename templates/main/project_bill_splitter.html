@@ -1,0 +1,278 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Bill Splitter | Wayne Portfolio{% endblock %}
+
+{% block content %}
+<style>
+  .bs-page { max-width: 760px; }
+
+  .bs-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+
+  .bs-section { margin-bottom: 1.5rem; }
+  .bs-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
+  .bs-section h3 { color: #fff; font-size: 1.1rem; margin-bottom: .6rem; }
+
+  /* Warning box: learning only */
+  .bs-note {
+    background: rgba(250, 204, 21, 0.08);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    color: #fde68a;
+    border-radius: .7rem;
+    padding: .8rem 1rem;
+    font-size: .92rem;
+    margin-bottom: 1.4rem;
+  }
+
+  /* The two forms sit in their own boxes */
+  .bs-box {
+    border: 1px solid #334155;
+    border-radius: .9rem;
+    padding: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Form */
+  .bs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .bs-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  .bs-person { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: .7rem; }
+  .bs-field { margin-bottom: 1rem; }
+  .bs-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
+  .bs-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .bs-field input, .bs-person input {
+    width: 100%;
+    padding: .75rem 1rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: .6rem;
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+  .bs-field input:focus, .bs-person input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
+  .bs-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
+
+  /* Errors */
+  .bs-errors {
+    background: rgba(239, 68, 68, .1);
+    border: 1px solid rgba(239, 68, 68, .45);
+    color: #fecaca;
+    border-radius: .7rem;
+    padding: .8rem 1rem .8rem 2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Result */
+  .bs-result {
+    margin-top: 1.4rem;
+    background: rgba(34, 211, 238, .07);
+    border: 1px solid rgba(34, 211, 238, .3);
+    border-radius: .9rem;
+    padding: 1.4rem;
+  }
+  .bs-big { font-size: clamp(1.5rem, 6vw, 2.1rem); font-weight: 800; color: #22d3ee; margin: .2rem 0 .6rem; }
+  .bs-table-wrap { overflow-x: auto; max-height: 360px; overflow-y: auto; border: 1px solid #334155; border-radius: .7rem; margin-top: .8rem; }
+  .bs-table { width: 100%; border-collapse: collapse; font-size: .92rem; min-width: 320px; }
+  .bs-table th { position: sticky; top: 0; background: #0f172a; color: #67e8f9; text-align: right; padding: .6rem .8rem; font-weight: 600; }
+  .bs-table td { text-align: right; padding: .5rem .8rem; color: #cbd5e1; border-top: 1px solid #334155; }
+  .bs-table th:first-child, .bs-table td:first-child { text-align: left; }
+  .bs-table tfoot td { color: #fff; font-weight: 700; background: #0f172a; }
+  .bs-check { margin-top: .8rem; font-size: .9rem; color: #86efac; }
+
+  .bs-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .bs-learn li { margin-bottom: .5rem; }
+
+  @media (max-width: 600px) {
+    .bs-row, .bs-row3 { grid-template-columns: 1fr; gap: 0; }
+    .bs-person { gap: .5rem; }
+  }
+</style>
+
+<div class="wrap bs-page">
+  <a href="{% url 'projects' %}" class="bs-back">← Back to Projects</a>
+  <h1 class="page-title">Bill <span>Splitter</span></h1>
+  <p class="page-subtitle">A fintech project: split a bill fairly, and make sure every franc is counted.</p>
+
+  <!-- 1. What it does -->
+  <div class="card bs-section">
+    <h2>1. What it does</h2>
+    <p>You type in a bill in Rwandan francs (RWF) and choose how to split it:</p>
+    <p>• <strong>Equal split:</strong> everyone pays the same, with an optional tip.<br>
+       • <strong>Split by what each person ordered:</strong> the tip and any shared cost (like a delivery fee) are shared out in proportion to what each person ordered.</p>
+    <p>Sometimes a bill does not divide into whole francs. This tool never loses or invents a franc: the shares always add up exactly to the total, and the page shows a check line to prove it.</p>
+  </div>
+
+  <!-- 2. The demo -->
+  <div class="card bs-section" id="demo">
+    <h2>2. Try it</h2>
+
+    <div class="bs-note">
+      ⚠️ For learning only. This is <strong>not financial advice</strong>. It only uses the numbers you type here, nothing is saved, and no real money or accounts are involved.
+    </div>
+
+    <!-- ===== Form 1: equal split ===== -->
+    <div class="bs-box" id="equal">
+      <h3>A. Split equally</h3>
+
+      {% if equal_errors %}
+      <ul class="bs-errors">
+        {% for e in equal_errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      <form method="post" action="{% url 'bill_splitter' %}#equal">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="equal">
+
+        <div class="bs-row3">
+          <div class="bs-field">
+            <label for="total">Bill total (RWF)</label>
+            <input type="text" inputmode="numeric" id="total" name="total" value="{{ equal_values.total }}" placeholder="e.g. 100000">
+          </div>
+          <div class="bs-field">
+            <label for="people">Number of people</label>
+            <input type="text" inputmode="numeric" id="people" name="people" value="{{ equal_values.people }}" placeholder="e.g. 3">
+          </div>
+          <div class="bs-field">
+            <label for="tip">Tip (%)</label>
+            <input type="text" inputmode="decimal" id="tip" name="tip" value="{{ equal_values.tip }}" placeholder="optional, e.g. 10">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary bs-button">Split equally</button>
+      </form>
+
+      {% if equal_result %}
+      <div class="bs-result">
+        <h3>Each person pays</h3>
+        <div class="bs-big">
+          {% if equal_result.remainder %}
+            {{ equal_result.base|floatformat:"0g" }} to {{ equal_result.base_plus|floatformat:"0g" }} RWF
+          {% else %}
+            {{ equal_result.base|floatformat:"0g" }} RWF
+          {% endif %}
+        </div>
+        <p>Bill: <strong>{{ equal_result.total|floatformat:"0g" }} RWF</strong>
+           + tip: <strong>{{ equal_result.tip_amount|floatformat:"0g" }} RWF</strong>
+           = <strong>{{ equal_result.grand_total|floatformat:"0g" }} RWF</strong></p>
+        {% if equal_result.remainder %}
+        <p>This does not divide into whole francs, so the first {{ equal_result.remainder }} {% if equal_result.remainder == 1 %}person pays{% else %}people pay{% endif %} 1 RWF more. That way the total is exact.</p>
+        {% endif %}
+
+        <div class="bs-table-wrap">
+          <table class="bs-table">
+            <thead><tr><th>Person</th><th>Pays (RWF)</th></tr></thead>
+            <tbody>
+              {% for row in equal_result.rows %}
+              <tr><td>{{ row.person }}</td><td>{{ row.pays|floatformat:"0g" }}</td></tr>
+              {% endfor %}
+            </tbody>
+            <tfoot><tr><td>Total</td><td>{{ equal_result.check|floatformat:"0g" }}</td></tr></tfoot>
+          </table>
+        </div>
+        <p class="bs-check">✓ Check: the shares add up to {{ equal_result.check|floatformat:"0g" }} RWF, exactly the total.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ===== Form 2: split by what each person ordered ===== -->
+    <div class="bs-box" id="unequal">
+      <h3>B. Split by what each person ordered</h3>
+      <p style="font-size:.92rem;">Fill in at least 2 rows. A name is optional. Leave unused rows empty.</p>
+
+      {% if split_errors %}
+      <ul class="bs-errors">
+        {% for e in split_errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      <form method="post" action="{% url 'bill_splitter' %}#unequal">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="unequal">
+
+        {% for r in split_rows %}
+        <div class="bs-person">
+          <input type="text" name="name{{ r.n }}" value="{{ r.name }}" placeholder="Name {{ r.n }} (optional)" maxlength="20" aria-label="Name for row {{ r.n }}">
+          <input type="text" inputmode="numeric" name="amount{{ r.n }}" value="{{ r.amount }}" placeholder="Ordered (RWF)" aria-label="Amount for row {{ r.n }}">
+        </div>
+        {% endfor %}
+
+        <div class="bs-row" style="margin-top:1rem;">
+          <div class="bs-field">
+            <label for="utip">Tip (%)</label>
+            <input type="text" inputmode="decimal" id="utip" name="utip" value="{{ split_values.tip }}" placeholder="optional, e.g. 10">
+            <small>Worked out on the total of what everyone ordered.</small>
+          </div>
+          <div class="bs-field">
+            <label for="shared">Shared cost (RWF)</label>
+            <input type="text" inputmode="numeric" id="shared" name="shared" value="{{ split_values.shared }}" placeholder="optional, e.g. 3000">
+            <small>For example a delivery fee or a dish for the table.</small>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary bs-button">Split by orders</button>
+      </form>
+
+      {% if split_result %}
+      <div class="bs-result">
+        <h3>Who pays what</h3>
+        <p>Ordered: <strong>{{ split_result.items_total|floatformat:"0g" }} RWF</strong>
+           + tip: <strong>{{ split_result.tip_amount|floatformat:"0g" }} RWF</strong>
+           + shared cost: <strong>{{ split_result.shared|floatformat:"0g" }} RWF</strong>
+           = <strong>{{ split_result.grand_total|floatformat:"0g" }} RWF</strong></p>
+
+        <div class="bs-table-wrap">
+          <table class="bs-table">
+            <thead>
+              <tr><th>Person</th><th>Ordered</th><th>Tip + shared</th><th>Pays (RWF)</th></tr>
+            </thead>
+            <tbody>
+              {% for row in split_result.rows %}
+              <tr>
+                <td>{{ row.name }}</td>
+                <td>{{ row.ordered|floatformat:"0g" }}</td>
+                <td>{{ row.extra|floatformat:"0g" }}</td>
+                <td><strong>{{ row.pays|floatformat:"0g" }}</strong></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr><td>Total</td><td>{{ split_result.items_total|floatformat:"0g" }}</td><td>{{ split_result.extras_total|floatformat:"0g" }}</td><td>{{ split_result.check|floatformat:"0g" }}</td></tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="bs-check">✓ Check: the shares add up to {{ split_result.check|floatformat:"0g" }} RWF, exactly the total.</p>
+        <p style="margin-top:.6rem; font-size:.9rem; color:#94a3b8;">The tip and shared cost are split in proportion to what each person ordered. If that leaves a few francs over, they go to the people whose shares were rounded down the most.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 3. Why it matters -->
+  <div class="card bs-section">
+    <h2>3. Why it matters for fintech</h2>
+    <p>Splitting money is a feature in many payment and mobile money apps: group dinners, shared rent, family contributions, group savings. In all of them the numbers must add up exactly. If an app loses or creates even one franc, its records stop matching the real money, and across thousands of payments that becomes a serious problem. Handling rounding carefully is a basic skill for anyone building money software.</p>
+  </div>
+
+  <!-- 4. What I learned -->
+  <div class="card bs-section">
+    <h2>4. What I learned</h2>
+    <ul class="bs-learn">
+      <li>You cannot always divide money evenly: 110,000 ÷ 3 leaves 2 francs over. Someone has to pay 1 RWF more.</li>
+      <li>The "largest remainder" method: round everyone's share down, then give the leftover francs to the people who lost the biggest fraction.</li>
+      <li>Always check that the shares add up exactly to the total. I added a check line that proves it.</li>
+      <li>How to put two different forms on one Django page, and tell them apart with a hidden field.</li>
+      <li>How to read several rows of input with a loop and skip the empty rows.</li>
+    </ul>
+  </div>
+
+  <!-- 5. Code -->
+  <div class="card bs-section">
+    <h2>5. See the code</h2>
+    <p>The full code is open on GitHub.</p>
+    <div class="btn-row">
+      <a href="https://github.com/waynendahiro1-ux/wayne-portfolio" target="_blank" class="btn-primary">View code on GitHub</a>
+      <a href="{% url 'projects' %}" class="btn-secondary">Back to Projects</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -13,4 +13,6 @@ urlpatterns = [
     path('projects/savings-goal/', views.savings_goal, name='savings_goal'),
     # Fintech project 2
     path('projects/loan-calculator/', views.loan_calculator, name='loan_calculator'),
+    # Fintech project 3
+    path('projects/bill-splitter/', views.bill_splitter, name='bill_splitter'),
 ]
