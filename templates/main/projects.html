@@ -17,6 +17,7 @@
         {% for t in p.tech %}<span class="tag">{{ t }}</span>{% endfor %}
       </div>
       <div class="btn-row">
+        {% if p.page %}<a href="{% url p.page %}" class="btn-primary btn-sm">Try the demo</a>{% endif %}
         {% if p.live %}<a href="{{ p.live }}" target="_blank" class="btn-primary btn-sm">Live site</a>{% endif %}
         {% if p.code %}<a href="{{ p.code }}" target="_blank" class="btn-secondary btn-sm">Code</a>{% endif %}
       </div>

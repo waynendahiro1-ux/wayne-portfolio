@@ -1,0 +1,189 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Savings Goal Calculator | Wayne Portfolio{% endblock %}
+
+{% block content %}
+<style>
+  .sg-page { max-width: 760px; }
+
+  .sg-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+
+  .sg-section { margin-bottom: 1.5rem; }
+  .sg-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
+
+  /* Warning box: learning only */
+  .sg-note {
+    background: rgba(250, 204, 21, 0.08);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    color: #fde68a;
+    border-radius: .7rem;
+    padding: .8rem 1rem;
+    font-size: .92rem;
+    margin-bottom: 1.4rem;
+  }
+
+  /* Form */
+  .sg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .sg-field { margin-bottom: 1rem; }
+  .sg-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
+  .sg-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .sg-field input {
+    width: 100%;
+    padding: .75rem 1rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: .6rem;
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+  .sg-field input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
+  .sg-or { text-align: center; color: #94a3b8; font-weight: 600; margin: -.2rem 0 .8rem; }
+  .sg-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
+
+  /* Errors */
+  .sg-errors {
+    background: rgba(239, 68, 68, .1);
+    border: 1px solid rgba(239, 68, 68, .45);
+    color: #fecaca;
+    border-radius: .7rem;
+    padding: .8rem 1rem .8rem 2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Result */
+  .sg-result {
+    margin-top: 1.5rem;
+    background: rgba(34, 211, 238, .07);
+    border: 1px solid rgba(34, 211, 238, .3);
+    border-radius: .9rem;
+    padding: 1.4rem;
+  }
+  .sg-result h3 { color: #fff; font-size: 1.1rem; margin-bottom: .5rem; }
+  .sg-big { font-size: clamp(1.7rem, 6vw, 2.3rem); font-weight: 800; color: #22d3ee; margin: .2rem 0 .6rem; }
+  .sg-bar { background: #0f172a; border-radius: 9999px; height: 12px; overflow: hidden; margin: .8rem 0 .3rem; }
+  .sg-bar-fill { background: linear-gradient(135deg, #06b6d4, #3b82f6); height: 100%; }
+
+  .sg-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .sg-learn li { margin-bottom: .5rem; }
+
+  @media (max-width: 600px) {
+    .sg-row { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>
+
+<div class="wrap sg-page">
+  <a href="{% url 'projects' %}" class="sg-back">← Back to Projects</a>
+  <h1 class="page-title">Savings Goal <span>Calculator</span></h1>
+  <p class="page-subtitle">A fintech project: plan how long a savings goal will take, or how much to save each month.</p>
+
+  <!-- 1. What it does -->
+  <div class="card sg-section">
+    <h2>1. What it does</h2>
+    <p>You type in a savings target in Rwandan francs (RWF). Then you choose one of two questions:</p>
+    <p>• "I can save this much each month. How many months will it take?"<br>
+       • "I want to reach my goal in this many months. How much do I need to save each month?"</p>
+    <p>You can also enter money you have already saved. This version does not include interest.</p>
+  </div>
+
+  <!-- 2. The demo -->
+  <div class="card sg-section" id="demo">
+    <h2>2. Try it</h2>
+
+    <div class="sg-note">
+      ⚠️ For learning only. This is <strong>not financial advice</strong>. It only uses the numbers you type here, nothing is saved, and no real money or accounts are involved.
+    </div>
+
+    {% if errors %}
+    <ul class="sg-errors">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" action="{% url 'savings_goal' %}#demo">
+      {% csrf_token %}
+
+      <div class="sg-row">
+        <div class="sg-field">
+          <label for="target">Target amount (RWF)</label>
+          <input type="text" inputmode="numeric" id="target" name="target" value="{{ values.target }}" placeholder="e.g. 500000">
+        </div>
+        <div class="sg-field">
+          <label for="saved">Already saved (RWF)</label>
+          <input type="text" inputmode="numeric" id="saved" name="saved" value="{{ values.saved }}" placeholder="optional, e.g. 50000">
+        </div>
+      </div>
+
+      <div class="sg-row">
+        <div class="sg-field">
+          <label for="monthly">Monthly saving (RWF)</label>
+          <input type="text" inputmode="numeric" id="monthly" name="monthly" value="{{ values.monthly }}" placeholder="e.g. 25000">
+          <small>Fill this to find the number of months.</small>
+        </div>
+        <div class="sg-field">
+          <label for="months">Number of months</label>
+          <input type="text" inputmode="numeric" id="months" name="months" value="{{ values.months }}" placeholder="e.g. 12">
+          <small>Or fill this to find the monthly saving.</small>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary sg-button">Calculate</button>
+    </form>
+
+    {% if result %}
+    <div class="sg-result">
+      {% if result.done %}
+        <h3>🎉 You have already reached your goal!</h3>
+        <p>Your savings are at or above your target.</p>
+      {% else %}
+        <h3>Your result</h3>
+
+        {% if result.mode == 'months' %}
+          <div class="sg-big">{{ result.months|floatformat:"0g" }} month{{ result.months|pluralize }}</div>
+          {% if result.years %}
+            <p>That is {{ result.years }} year{{ result.years|pluralize }}{% if result.extra_months %} and {{ result.extra_months }} month{{ result.extra_months|pluralize }}{% endif %}.</p>
+          {% endif %}
+        {% else %}
+          <div class="sg-big">{{ result.monthly|floatformat:"0g" }} RWF per month</div>
+          <p>for {{ result.months|floatformat:"0g" }} month{{ result.months|pluralize }}.</p>
+        {% endif %}
+
+        <p>Still to save: <strong>{{ result.remaining|floatformat:"0g" }} RWF</strong></p>
+
+        <div class="sg-bar"><div class="sg-bar-fill" style="width: {{ result.percent }}%;"></div></div>
+        <small style="color:#94a3b8;">{{ result.percent }}% of your target is already saved.</small>
+        <p style="margin-top:.8rem; font-size:.9rem; color:#94a3b8;">Amounts are rounded up to the next whole month or whole franc, so the last month may need a little less.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 3. Why it matters -->
+  <div class="card sg-section">
+    <h2>3. Why it matters for fintech</h2>
+    <p>Saving goals are a core feature of many fintech apps. Digital savings tools turn a big goal, like school fees or a laptop, into a small monthly step, and that makes saving easier to start and to stick with. Mobile phones are how many people in Rwanda and across Africa reach financial services, so simple, clear tools like this matter.</p>
+  </div>
+
+  <!-- 4. What I learned -->
+  <div class="card sg-section">
+    <h2>4. What I learned</h2>
+    <ul class="sg-learn">
+      <li>How to build an HTML form in Django and read what a visitor types.</li>
+      <li>How to check input (empty, negative, letters, too big) and show friendly error messages.</li>
+      <li>How to round up with whole-number maths, because you cannot save for "4.3 months".</li>
+      <li>How to avoid dividing by zero.</li>
+      <li>How to keep a form filled in after the page reloads.</li>
+    </ul>
+  </div>
+
+  <!-- 5. Code -->
+  <div class="card sg-section">
+    <h2>5. See the code</h2>
+    <p>The full code is open on GitHub.</p>
+    <div class="btn-row">
+      <a href="https://github.com/waynendahiro1-ux/wayne-portfolio" target="_blank" class="btn-primary">View code on GitHub</a>
+      <a href="{% url 'projects' %}" class="btn-secondary">Back to Projects</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
