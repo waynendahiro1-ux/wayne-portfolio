@@ -144,3 +144,7 @@ LOGGING = {
         },
     },
 }
+
+# Contact form email (Resend)
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+CONTACT_RECIPIENT = 'imenawayne@gmail.com'

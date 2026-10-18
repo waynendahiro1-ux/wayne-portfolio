@@ -162,6 +162,23 @@
     }
   }
 
+  /* Success and error messages */
+  .form-success {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: #86efac;
+    padding: 0.9rem 1rem;
+    border-radius: 0.6rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.95rem;
+  }
+
+  .form-error {
+    color: #fca5a5;
+    font-size: 0.85rem;
+    margin-top: 0.35rem;
+  }
+
   .btn-primary {
     background: linear-gradient(135deg, #06b6d4, #3b82f6);
     color: white;
@@ -266,27 +283,46 @@
     </div>
 
     <!-- Contact Form -->
-    <div class="info-card">
+    <div class="info-card" id="send-message">
       <h2>✉️ Send a Message</h2>
-      <form method="post" action="">
+
+      {% if messages %}
+        {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}form-error{% else %}form-success{% endif %}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'contact' %}#send-message">
         {% csrf_token %}
         <div class="form-row">
           <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" placeholder="Your name" required>
+            <label for="{{ form.name.id_for_label }}">Name</label>
+            {{ form.name }}
+            {% for error in form.name.errors %}
+              <div class="form-error">{{ error }}</div>
+            {% endfor %}
           </div>
           <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            <label for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}
+            {% for error in form.email.errors %}
+              <div class="form-error">{{ error }}</div>
+            {% endfor %}
           </div>
         </div>
         <div class="form-group">
-          <label for="subject">Subject</label>
-          <input type="text" id="subject" name="subject" placeholder="What's this about?">
+          <label for="{{ form.subject.id_for_label }}">Subject</label>
+          {{ form.subject }}
+          {% for error in form.subject.errors %}
+            <div class="form-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <div class="form-group">
-          <label for="message">Message</label>
-          <textarea id="message" name="message" placeholder="Write your message here..." required></textarea>
+          <label for="{{ form.message.id_for_label }}">Message</label>
+          {{ form.message }}
+          {% for error in form.message.errors %}
+            <div class="form-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <button type="submit" class="btn-primary">Send Message</button>
       </form>
