@@ -35,6 +35,60 @@
     </div>
   </div>
 
+  <!-- NEW: Stats tracker -->
+  <style>
+    .stat-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:1rem; margin:1rem 0 1.5rem; }
+    .stat-box { text-align:center; padding:1rem .5rem; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); }
+    .stat-box .num { font-size:1.9rem; font-weight:700; color:#67e8f9; }
+    .stat-box .label { font-size:.85rem; opacity:.8; }
+    .table-scroll { overflow-x:auto; }
+    .games-table { width:100%; border-collapse:collapse; min-width:420px; }
+    .games-table th, .games-table td { padding:.6rem .7rem; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1); }
+    .games-table th { color:#67e8f9; font-size:.9rem; }
+  </style>
+
+  <div class="card" style="margin-bottom:2.5rem;">
+    <h2>📊 My Stats</h2>
+
+    {% if stats %}
+      <div class="stat-row">
+        <div class="stat-box"><div class="num">{{ stats.games }}</div><div class="label">Games</div></div>
+        <div class="stat-box"><div class="num">{{ stats.ppg }}</div><div class="label">Points / game</div></div>
+        <div class="stat-box"><div class="num">{{ stats.rpg }}</div><div class="label">Rebounds / game</div></div>
+        <div class="stat-box"><div class="num">{{ stats.apg }}</div><div class="label">Assists / game</div></div>
+        <div class="stat-box"><div class="num">{{ stats.best }}</div><div class="label">Career high (pts)</div></div>
+      </div>
+
+      <h3>Game history</h3>
+      <div class="table-scroll">
+        <table class="games-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Opponent</th>
+              <th>PTS</th>
+              <th>REB</th>
+              <th>AST</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for game in games %}
+            <tr>
+              <td>{{ game.date|date:"j M Y" }}</td>
+              <td>{{ game.opponent }}</td>
+              <td>{{ game.points }}</td>
+              <td>{{ game.rebounds }}</td>
+              <td>{{ game.assists }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No games logged yet. Stats will appear here after my next game.</p>
+    {% endif %}
+  </div>
+
   <div class="card" style="margin-bottom:2.5rem;">
     <h2>What basketball taught me</h2>
     <p><strong style="color:#67e8f9;">Discipline:</strong> showing up every day, even when no one is watching.</p>

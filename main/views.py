@@ -10,6 +10,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from .forms import ContactForm
+from .models import Game
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,24 @@ def contact(request):
     return render(request, 'main/contact.html', {'form': form})
 
 def basketball(request):
-    return render(request, 'main/basketball.html')
+    # NEW: the stats tracker
+    games = Game.objects.all()          # newest game first
+    total_games = games.count()
+
+    stats = None
+    if total_games > 0:
+        total_points = sum(g.points for g in games)
+        total_rebounds = sum(g.rebounds for g in games)
+        total_assists = sum(g.assists for g in games)
+        stats = {
+            'games': total_games,
+            'ppg': round(total_points / total_games, 1),
+            'rpg': round(total_rebounds / total_games, 1),
+            'apg': round(total_assists / total_games, 1),
+            'best': max(g.points for g in games),
+        }
+
+    return render(request, 'main/basketball.html', {'games': games, 'stats': stats})
 
 def fintech(request):
     return render(request, 'main/fintech.html')

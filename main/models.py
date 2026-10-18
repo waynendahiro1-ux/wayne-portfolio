@@ -14,3 +14,17 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.name}: {self.subject or 'No subject'}"
+
+
+class Game(models.Model):
+    date = models.DateField()
+    opponent = models.CharField(max_length=100)
+    points = models.PositiveIntegerField(default=0)
+    rebounds = models.PositiveIntegerField(default=0)
+    assists = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-date']  # newest game first
+
+    def __str__(self):
+        return f"{self.date} vs {self.opponent}"

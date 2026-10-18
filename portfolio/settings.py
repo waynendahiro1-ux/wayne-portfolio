@@ -7,6 +7,8 @@ Configured for local development and deployment on Render.
 import os
 from pathlib import Path
 
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -73,13 +75,14 @@ WSGI_APPLICATION = 'portfolio.wsgi.application'
 
 
 # Database
-# Note: SQLite data on Render's free tier is wiped on each redeploy.
+# Live site: uses the DATABASE_URL environment variable (Neon Postgres).
+# Local: if DATABASE_URL is not set, it falls back to the db.sqlite3 file.
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,
+    )
 }
 
 
