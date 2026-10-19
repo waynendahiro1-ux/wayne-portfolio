@@ -90,6 +90,21 @@
   .ws-reset { margin-top: 1rem; }
   .ws-hint { color: #94a3b8; font-size: .88rem; }
 
+  /* Fee table dropdown */
+  .ws-details { margin-top: 1rem; font-size: .92rem; color: #cbd5e1; }
+  .ws-details summary { cursor: pointer; color: #67e8f9; font-weight: 600; }
+
+  /* Tables (fee table and history) */
+  .ws-table-wrap { overflow-x: auto; border: 1px solid #334155; border-radius: .7rem; margin-top: .8rem; }
+  .ws-table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 320px; }
+  .ws-table th { background: #0f172a; color: #67e8f9; text-align: right; padding: .6rem .8rem; font-weight: 600; white-space: nowrap; }
+  .ws-table td { text-align: right; padding: .5rem .8rem; color: #cbd5e1; border-top: 1px solid #334155; white-space: nowrap; }
+  .ws-table th:first-child, .ws-table td:first-child { text-align: left; }
+  .ws-history td:nth-child(2) { text-align: left; }
+  .ws-history th:nth-child(2) { text-align: left; }
+  .ws-minus { color: #fca5a5; font-weight: 700; }
+  .ws-plus { color: #86efac; font-weight: 700; }
+
   .ws-coming { padding-left: 1.2rem; color: #cbd5e1; }
   .ws-coming li { margin-bottom: .4rem; }
   .ws-learn { padding-left: 1.2rem; color: #cbd5e1; }
@@ -111,17 +126,17 @@
     <p>Mobile money wallets let people store, send and receive money on a phone. This project is a <strong>simulator</strong> of that idea, built in 4 stages:</p>
     <ol class="ws-coming">
       <li><strong>Create a demo wallet</strong> (ready)</li>
-      <li><strong>Send money</strong> to another demo wallet (ready now)</li>
-      <li>Fees and transaction history (coming)</li>
+      <li><strong>Send money</strong> to another demo wallet (ready)</li>
+      <li><strong>Fees and transaction history</strong> (ready now)</li>
       <li>QR payment request (coming)</li>
     </ol>
-    <p>Everything here is fake. No real money, no real accounts and no personal data.</p>
+    <p>Everything here is fake. No real money, no real accounts and no personal data. The fees are made-up demo fees, not the fees of any real company.</p>
   </div>
 
   <!-- 2. The demo -->
   <div class="card ws-section" id="demo">
     <h2>2. Try it</h2>
-    <span class="ws-stage">Stage 2 of 4: send money</span>
+    <span class="ws-stage">Stage 3 of 4: fees and history</span>
 
     <div class="ws-note">
       ⚠️ For learning only. This is <strong>not financial advice</strong>. The money is <strong>fake</strong>. Please do not type your real name, phone number or any personal details. Use a made-up nickname.
@@ -164,16 +179,60 @@
             <div class="ws-field">
               <label for="amount">Amount (RWF)</label>
               <input type="text" inputmode="numeric" id="amount" name="amount" value="{{ send_values.amount }}" placeholder="e.g. 5000" autocomplete="off">
+              <small>A demo fee is added on top. The receiver gets the full amount.</small>
             </div>
           </div>
 
           <button type="submit" class="btn-primary ws-button">Send fake money</button>
         </form>
 
+        <details class="ws-details">
+          <summary>See the demo fee table</summary>
+          <p>These are made-up fees for learning, not real mobile money fees. The sender pays the amount plus the fee. The fee goes to the Demo Operator wallet ({{ operator_number }}), so every franc is accounted for.</p>
+          <div class="ws-table-wrap">
+            <table class="ws-table">
+              <thead><tr><th>Amount sent (RWF)</th><th>Fee (RWF)</th></tr></thead>
+              <tbody>
+                {% for row in fee_rows %}
+                <tr><td>{{ row.range }}</td><td>{{ row.fee|floatformat:"0g" }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </details>
+
         <p class="ws-hint" style="margin-top:1rem;">
           Nobody to send to? Send to <strong>Demo Friend</strong>, wallet number <strong>{{ friend_number }}</strong>.
           Or open this page in a private window, create a second wallet, and send between the two.
         </p>
+      </div>
+
+      <!-- Transaction history -->
+      <div class="ws-box ws-send" id="history">
+        <h3>Your transaction history</h3>
+        {% if history %}
+        <div class="ws-table-wrap">
+          <table class="ws-table ws-history">
+            <thead>
+              <tr><th>When</th><th>With</th><th>Amount</th><th>Fee</th><th>Balance change</th></tr>
+            </thead>
+            <tbody>
+              {% for row in history %}
+              <tr>
+                <td>{{ row.when|date:"j M, H:i" }}</td>
+                <td>{% if row.sent %}Sent to{% else %}From{% endif %} {{ row.other }}</td>
+                <td>{{ row.amount|floatformat:"0g" }}</td>
+                <td>{% if row.sent %}{{ row.fee|floatformat:"0g" }}{% else %}–{% endif %}</td>
+                <td>{% if row.sent %}<span class="ws-minus">−{{ row.total|floatformat:"0g" }}</span>{% else %}<span class="ws-plus">+{{ row.total|floatformat:"0g" }}</span>{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="ws-hint" style="margin-top:.6rem;">Showing your latest 20 transfers. For money you sent, the balance change is the amount plus the fee. For money you received, there is no fee.</p>
+        {% else %}
+        <p class="ws-hint">No transfers yet. Send some fake money and it will appear here.</p>
+        {% endif %}
       </div>
 
       <form method="post" action="{% url 'wallet_simulator' %}#demo" class="ws-reset">
@@ -214,7 +273,7 @@
   <!-- 3. Why it matters -->
   <div class="card ws-section">
     <h2>3. Why it matters for fintech</h2>
-    <p>Mobile money is one of the most important fintech ideas in Africa. It lets people who do not use a bank send, receive and save money using only a phone. Every mobile money app starts with the same basic building block: a wallet that belongs to a user, has a unique number, and holds a balance that is stored safely and never goes below zero. Sending money adds a second rule: a transfer must take money from one wallet and add the same amount to another, as one single step. If it only half-happens, money disappears or appears from nowhere. Understanding these rules is the first step to understanding fees, payments and how real money systems stay trustworthy.</p>
+    <p>Mobile money is one of the most important fintech ideas in Africa. It lets people who do not use a bank send, receive and save money using only a phone. Every mobile money app starts with the same basic building block: a wallet that belongs to a user, has a unique number, and holds a balance that is stored safely and never goes below zero. Sending money adds a second rule: a transfer must take money from one wallet and add the same amount to another, as one single step. If it only half-happens, money disappears or appears from nowhere. Fees add a third rule: the fee must go somewhere, so the books always balance. Providers earn their income from fees, and users need a clear history to see where their money went. Understanding these rules is the first step to understanding how real money systems stay trustworthy.</p>
   </div>
 
   <!-- 4. What I learned -->
@@ -227,7 +286,9 @@
       <li>How to check what the visitor types, and why a wallet balance should never be able to go below zero.</li>
       <li>How to move money between two wallets in one database transaction, so both balances change together or not at all.</li>
       <li>How to block bad transfers: wallets that do not exist, sending to yourself, zero amounts and not enough balance.</li>
-      <li>How to lock the two wallets during a transfer, so two payments at the same time cannot spend the same money.</li>
+      <li>How to lock the wallets during a transfer, so two payments at the same time cannot spend the same money.</li>
+      <li>How to add a fee from a table of amount bands, and why the fee has to be paid to a wallet so no franc disappears.</li>
+      <li>How to build a transaction history from the transfer records, showing money sent (with the fee) and money received.</li>
     </ul>
   </div>
 

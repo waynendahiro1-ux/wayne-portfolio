@@ -45,14 +45,15 @@ class Wallet(models.Model):
 
 
 class Transfer(models.Model):
-    """One demo transfer of fake money from one wallet to another (stage 2)."""
+    """One demo transfer of fake money from one wallet to another (stage 2), with a fee (stage 3)."""
     sender = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='sent_transfers')
     receiver = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='received_transfers')
-    amount = models.PositiveBigIntegerField()                       # fake RWF, whole francs
+    amount = models.PositiveBigIntegerField()                       # fake RWF the receiver gets
+    fee = models.PositiveBigIntegerField(default=0)                 # fake RWF fee paid by the sender on top (goes to the Demo Operator)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']  # newest transfer first
 
     def __str__(self):
-        return f"{self.sender.wallet_number} to {self.receiver.wallet_number}: {self.amount} RWF"
+        return f"{self.sender.wallet_number} to {self.receiver.wallet_number}: {self.amount} RWF (fee {self.fee})"

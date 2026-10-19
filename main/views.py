@@ -10,6 +10,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -453,12 +454,47 @@ def bill_splitter(request):
     })
 
 
-# ---------- Fintech project 4: Mobile Money Wallet Simulator (stage 1: wallet, stage 2: send money) ----------
+# ---------- Fintech project 4: Mobile Money Wallet Simulator (stage 1: wallet, 2: send money, 3: fees and history) ----------
 
 STARTING_BALANCE = 50000    # fake RWF every new demo wallet starts with
 MAX_WALLETS = 300           # safety limit so the free database does not fill up
 WALLET_LIFETIME_DAYS = 7    # demo wallets older than this are deleted automatically
-FRIEND_NUMBER = 'DW-000000' # the permanent "Demo Friend" wallet (random numbers never start with 000)
+FRIEND_NUMBER = 'DW-000000'     # the permanent "Demo Friend" wallet (random numbers never start with 000)
+OPERATOR_NUMBER = 'DW-000001'   # the permanent "Demo Operator" wallet that receives all the fees
+SPECIAL_NUMBERS = [FRIEND_NUMBER, OPERATOR_NUMBER]   # these two are never deleted and do not count toward the cap
+
+# The DEMO fee table. These are MADE-UP fees for learning, NOT real MTN or Airtel fees.
+# Each line is (biggest amount in this band, fee in RWF). Change the numbers to try your own table.
+# The last line must have a very big number so it catches every amount.
+FEE_TABLE = [
+    (1000, 0),
+    (5000, 50),
+    (20000, 150),
+    (50000, 300),
+    (1_000_000_000_000, 500),
+]
+
+
+def calculate_fee(amount):
+    """Find the demo fee for a transfer amount using FEE_TABLE."""
+    for biggest, fee in FEE_TABLE:
+        if amount <= biggest:
+            return fee
+    return FEE_TABLE[-1][1]
+
+
+def fee_table_rows():
+    """Turn FEE_TABLE into rows the page can show, like '1,001 to 5,000'."""
+    rows = []
+    start = 1
+    for biggest, fee in FEE_TABLE:
+        if biggest == FEE_TABLE[-1][0]:
+            label = f"{start:,} and above"
+        else:
+            label = f"{start:,} to {biggest:,}"
+        rows.append({'range': label, 'fee': fee})
+        start = biggest + 1
+    return rows
 
 
 def get_demo_friend():
@@ -468,6 +504,15 @@ def get_demo_friend():
         defaults={'nickname': 'Demo Friend', 'balance': STARTING_BALANCE},
     )
     return friend
+
+
+def get_demo_operator():
+    """Make sure the permanent Demo Operator wallet exists. It collects the fees, so no franc disappears."""
+    operator, created = Wallet.objects.get_or_create(
+        wallet_number=OPERATOR_NUMBER,
+        defaults={'nickname': 'Demo Operator', 'balance': 0},
+    )
+    return operator
 
 
 def read_nickname(text, errors):
@@ -514,27 +559,71 @@ def read_wallet_number(text, errors):
 
 
 def do_transfer(sender_id, receiver_id, amount):
-    """Move fake money from one wallet to another. Returns an error message, or None if it worked.
-    transaction.atomic() means both balances change together, or neither changes.
-    select_for_update() locks the two wallets while we work, so two payments at the
+    """Move fake money from one wallet to another and charge the demo fee.
+    Returns (error message or None, fee).
+
+    The sender pays amount + fee. The receiver gets the full amount. The Demo Operator gets the fee.
+    So: sender loses (amount + fee) = receiver gains amount + operator gains fee. Every franc is accounted for.
+
+    transaction.atomic() means ALL the balances change together, or none of them change.
+    select_for_update() locks the wallets while we work, so two payments at the
     same moment cannot spend the same money."""
+    fee = calculate_fee(amount)
+    operator_id = get_demo_operator().id
+
     with transaction.atomic():
-        locked = Wallet.objects.select_for_update().filter(id__in=[sender_id, receiver_id]).order_by('id')
+        locked = Wallet.objects.select_for_update().filter(id__in=[sender_id, receiver_id, operator_id]).order_by('id')
         wallets = {w.id: w for w in locked}
         sender = wallets.get(sender_id)
         receiver = wallets.get(receiver_id)
+        operator = wallets.get(operator_id)
 
-        if sender is None or receiver is None:
-            return "One of the wallets no longer exists. Please try again."
-        if amount > sender.balance:
-            return "Not enough balance for that transfer."
+        if sender is None or receiver is None or operator is None:
+            return "One of the wallets no longer exists. Please try again.", fee
+        if amount + fee > sender.balance:
+            return (
+                f"Not enough balance. This transfer needs {amount:,} + {fee:,} fee = {amount + fee:,} RWF, "
+                f"and your balance is {sender.balance:,} RWF."
+            ), fee
 
-        sender.balance -= amount
+        sender.balance -= amount + fee
         receiver.balance += amount
-        sender.save(update_fields=['balance'])
-        receiver.save(update_fields=['balance'])
-        Transfer.objects.create(sender=sender, receiver=receiver, amount=amount)
-    return None
+        operator.balance += fee
+        for wallet in wallets.values():     # if the receiver IS the operator, it is the same object and saved once
+            wallet.save(update_fields=['balance'])
+        Transfer.objects.create(sender=sender, receiver=receiver, amount=amount, fee=fee)
+    return None, fee
+
+
+def build_history(wallet):
+    """Make the list of this wallet's latest 20 transfers (sent and received) for the history table."""
+    transfers = (
+        Transfer.objects
+        .filter(Q(sender=wallet) | Q(receiver=wallet))
+        .select_related('sender', 'receiver')
+        .order_by('-created_at', '-id')[:20]
+    )
+    rows = []
+    for t in transfers:
+        if t.sender_id == wallet.id:
+            rows.append({
+                'when': t.created_at,
+                'sent': True,
+                'other': f"{t.receiver.nickname} ({t.receiver.wallet_number})",
+                'amount': t.amount,
+                'fee': t.fee,
+                'total': t.amount + t.fee,      # what left this wallet
+            })
+        else:
+            rows.append({
+                'when': t.created_at,
+                'sent': False,
+                'other': f"{t.sender.nickname} ({t.sender.wallet_number})",
+                'amount': t.amount,
+                'fee': 0,                       # the receiver pays no fee
+                'total': t.amount,              # what arrived in this wallet
+            })
+    return rows
 
 
 def wallet_simulator(request):
@@ -543,8 +632,9 @@ def wallet_simulator(request):
     nickname = ''
     send_values = {'to': '', 'amount': ''}
 
-    # The permanent Demo Friend wallet always exists
+    # The permanent Demo Friend and Demo Operator wallets always exist
     get_demo_friend()
+    get_demo_operator()
 
     # 1. Does this visitor already have a demo wallet? (we remember it with the session)
     wallet = None
@@ -562,7 +652,7 @@ def wallet_simulator(request):
 
         # ----- Start over: delete this visitor's demo wallet -----
         if mode == 'reset':
-            if wallet is not None:
+            if wallet is not None and wallet.wallet_number not in SPECIAL_NUMBERS:
                 wallet.delete()
             request.session.pop('wallet_id', None)
             return redirect(reverse('wallet_simulator') + '#demo')
@@ -572,11 +662,11 @@ def wallet_simulator(request):
             nickname = request.POST.get('nickname', '').strip()
             clean_nickname = read_nickname(nickname, errors)
 
-            # Tidy up: delete demo wallets older than 7 days (never the Demo Friend)
+            # Tidy up: delete demo wallets older than 7 days (never the Demo Friend or Demo Operator)
             old = timezone.now() - timedelta(days=WALLET_LIFETIME_DAYS)
-            Wallet.objects.filter(created_at__lt=old).exclude(wallet_number=FRIEND_NUMBER).delete()
+            Wallet.objects.filter(created_at__lt=old).exclude(wallet_number__in=SPECIAL_NUMBERS).delete()
 
-            if not errors and Wallet.objects.exclude(wallet_number=FRIEND_NUMBER).count() >= MAX_WALLETS:
+            if not errors and Wallet.objects.exclude(wallet_number__in=SPECIAL_NUMBERS).count() >= MAX_WALLETS:
                 errors.append("The demo is full right now. Please try again later.")
 
             if not errors:
@@ -609,16 +699,19 @@ def wallet_simulator(request):
                         send_errors.append(f"No demo wallet has the number {to_number}.")
 
             if not send_errors:
-                problem = do_transfer(wallet.id, receiver.id, amount)
+                problem, fee = do_transfer(wallet.id, receiver.id, amount)
                 if problem:
                     send_errors.append(problem)
                 else:
                     wallet.refresh_from_db()    # get the new balance
                     request.session['wallet_flash'] = (
                         f"Sent {amount:,} RWF to {receiver.nickname} ({receiver.wallet_number}). "
+                        f"Fee: {fee:,} RWF. Total taken from your wallet: {amount + fee:,} RWF. "
                         f"Your new balance is {wallet.balance:,} RWF."
                     )
                     return redirect(reverse('wallet_simulator') + '#send')
+
+    history = build_history(wallet) if wallet is not None else []
 
     return render(request, 'main/project_wallet_simulator.html', {
         'wallet': wallet,
@@ -629,6 +722,9 @@ def wallet_simulator(request):
         'send_values': send_values,
         'flash': flash,
         'friend_number': FRIEND_NUMBER,
+        'operator_number': OPERATOR_NUMBER,
+        'fee_rows': fee_table_rows(),
+        'history': history,
     })
 
 
@@ -669,7 +765,7 @@ def projects(request):
         {
             'icon': '📱',
             'title': 'Mobile Money Wallet Simulator',
-            'description': 'Create a demo wallet with fake money and see how a mobile money wallet works. Built in stages: wallets, transfers, fees and history, and QR payment requests. Fake money only, for learning, not financial advice.',
+            'description': 'Create a demo wallet with fake money, send it to other demo wallets, see the fees and your transaction history. Built in stages, with QR payment requests coming next. Fake money only, for learning, not financial advice.',
             'tech': ['Python', 'Django', 'Fintech'],
             'page': 'wallet_simulator',  # opens the demo page on this site
             'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',

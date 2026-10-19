@@ -22,4 +22,4 @@ class WalletAdmin(admin.ModelAdmin):
 
 @admin.register(Transfer)
 class TransferAdmin(admin.ModelAdmin):
-    list_display = ('created_at', 'sender', 'receiver', 'amount')
+    list_display = ('created_at', 'sender', 'receiver', 'amount', 'fee')
