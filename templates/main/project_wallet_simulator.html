@@ -1,0 +1,188 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Mobile Money Wallet Simulator | Wayne Portfolio{% endblock %}
+
+{% block content %}
+<style>
+  .ws-page { max-width: 760px; }
+
+  .ws-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+
+  .ws-section { margin-bottom: 1.5rem; }
+  .ws-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
+  .ws-section h3 { color: #fff; font-size: 1.1rem; margin-bottom: .6rem; }
+
+  /* Warning box: learning only */
+  .ws-note {
+    background: rgba(250, 204, 21, 0.08);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    color: #fde68a;
+    border-radius: .7rem;
+    padding: .8rem 1rem;
+    font-size: .92rem;
+    margin-bottom: 1.4rem;
+  }
+
+  /* Stage badge */
+  .ws-stage {
+    display: inline-block;
+    background: rgba(34, 211, 238, .12);
+    border: 1px solid rgba(34, 211, 238, .35);
+    color: #67e8f9;
+    border-radius: 999px;
+    padding: .2rem .8rem;
+    font-size: .82rem;
+    font-weight: 600;
+    margin-bottom: .8rem;
+  }
+
+  /* Form */
+  .ws-box { border: 1px solid #334155; border-radius: .9rem; padding: 1.2rem; }
+  .ws-field { margin-bottom: 1rem; }
+  .ws-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
+  .ws-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .ws-field input {
+    width: 100%;
+    padding: .75rem 1rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: .6rem;
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+  .ws-field input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
+  .ws-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
+
+  /* Errors */
+  .ws-errors {
+    background: rgba(239, 68, 68, .1);
+    border: 1px solid rgba(239, 68, 68, .45);
+    color: #fecaca;
+    border-radius: .7rem;
+    padding: .8rem 1rem .8rem 2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* The wallet card */
+  .ws-wallet {
+    background: linear-gradient(135deg, rgba(34, 211, 238, .14), rgba(15, 23, 42, .9));
+    border: 1px solid rgba(34, 211, 238, .4);
+    border-radius: 1rem;
+    padding: 1.4rem;
+  }
+  .ws-demo-tag { color: #fde68a; font-size: .78rem; font-weight: 700; letter-spacing: .08em; }
+  .ws-name { color: #fff; font-size: 1.3rem; font-weight: 700; margin: .3rem 0 0; }
+  .ws-number { color: #94a3b8; font-size: .95rem; letter-spacing: .06em; margin: 0 0 .8rem; }
+  .ws-label { color: #94a3b8; font-size: .85rem; margin: 0; }
+  .ws-balance { font-size: clamp(1.7rem, 7vw, 2.4rem); font-weight: 800; color: #22d3ee; margin: .1rem 0 .6rem; }
+  .ws-meta { color: #94a3b8; font-size: .85rem; margin: 0; }
+  .ws-reset { margin-top: 1rem; }
+
+  .ws-coming { padding-left: 1.2rem; color: #cbd5e1; }
+  .ws-coming li { margin-bottom: .4rem; }
+  .ws-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .ws-learn li { margin-bottom: .5rem; }
+</style>
+
+<div class="wrap ws-page">
+  <a href="{% url 'projects' %}" class="ws-back">← Back to Projects</a>
+  <h1 class="page-title">Mobile Money <span>Wallet Simulator</span></h1>
+  <p class="page-subtitle">A fintech project: a demo wallet with fake money, to see how mobile money works.</p>
+
+  <!-- 1. What it does -->
+  <div class="card ws-section">
+    <h2>1. What it does</h2>
+    <p>Mobile money wallets let people store, send and receive money on a phone. This project is a <strong>simulator</strong> of that idea, built in 4 stages:</p>
+    <ol class="ws-coming">
+      <li><strong>Create a demo wallet</strong> (ready now)</li>
+      <li>Send money to another demo wallet (coming next)</li>
+      <li>Fees and transaction history (coming)</li>
+      <li>QR payment request (coming)</li>
+    </ol>
+    <p>Everything here is fake. No real money, no real accounts and no personal data.</p>
+  </div>
+
+  <!-- 2. The demo -->
+  <div class="card ws-section" id="demo">
+    <h2>2. Try it</h2>
+    <span class="ws-stage">Stage 1 of 4: create a demo wallet</span>
+
+    <div class="ws-note">
+      ⚠️ For learning only. This is <strong>not financial advice</strong>. The money is <strong>fake</strong>. Please do not type your real name, phone number or any personal details. Use a made-up nickname.
+    </div>
+
+    {% if wallet %}
+      <!-- The visitor already has a demo wallet -->
+      <div class="ws-wallet">
+        <p class="ws-demo-tag">DEMO WALLET · FAKE MONEY</p>
+        <p class="ws-name">{{ wallet.nickname }}</p>
+        <p class="ws-number">Wallet number: {{ wallet.wallet_number }}</p>
+        <p class="ws-label">Balance</p>
+        <p class="ws-balance">{{ wallet.balance|floatformat:"0g" }} RWF</p>
+        <p class="ws-meta">Created {{ wallet.created_at|date:"j M Y, H:i" }}. Demo wallets are deleted automatically after 7 days.</p>
+      </div>
+
+      <form method="post" action="{% url 'wallet_simulator' %}#demo" class="ws-reset">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="reset">
+        <button type="submit" class="btn-secondary ws-button">Delete this wallet and start over</button>
+      </form>
+
+    {% else %}
+      <!-- No wallet yet: show the create form -->
+      <div class="ws-box">
+        <h3>Create your demo wallet</h3>
+
+        {% if errors %}
+        <ul class="ws-errors">
+          {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="post" action="{% url 'wallet_simulator' %}#demo">
+          {% csrf_token %}
+          <input type="hidden" name="mode" value="create">
+
+          <div class="ws-field">
+            <label for="nickname">Nickname</label>
+            <input type="text" id="nickname" name="nickname" value="{{ nickname }}" placeholder="e.g. Demo Wayne" maxlength="20" autocomplete="off">
+            <small>2 to 20 characters. Letters, spaces and hyphens only.</small>
+          </div>
+
+          <p style="font-size:.92rem;">Your new wallet starts with <strong>{{ starting_balance|floatformat:"0g" }} RWF of fake money</strong>.</p>
+
+          <button type="submit" class="btn-primary ws-button">Create demo wallet</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- 3. Why it matters -->
+  <div class="card ws-section">
+    <h2>3. Why it matters for fintech</h2>
+    <p>Mobile money is one of the most important fintech ideas in Africa. It lets people who do not use a bank send, receive and save money using only a phone. Every mobile money app starts with the same basic building block: a wallet that belongs to a user, has a unique number, and holds a balance that is stored safely and never goes below zero. Understanding that building block is the first step to understanding transfers, fees and payments.</p>
+  </div>
+
+  <!-- 4. What I learned -->
+  <div class="card ws-section">
+    <h2>4. What I learned</h2>
+    <ul class="ws-learn">
+      <li>How to design a database model for a wallet: a nickname, a unique wallet number and a balance in whole francs.</li>
+      <li>How to make a random wallet number and check that no other wallet already has it.</li>
+      <li>How to use a Django session to remember a visitor without a login or any personal data.</li>
+      <li>How to check what the visitor types, and why a wallet balance should never be able to go below zero.</li>
+    </ul>
+  </div>
+
+  <!-- 5. Code -->
+  <div class="card ws-section">
+    <h2>5. See the code</h2>
+    <p>The full code is open on GitHub.</p>
+    <div class="btn-row">
+      <a href="https://github.com/waynendahiro1-ux/wayne-portfolio" target="_blank" class="btn-primary">View code on GitHub</a>
+      <a href="{% url 'projects' %}" class="btn-secondary">Back to Projects</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,7 +1,9 @@
 import json
 import logging
+import secrets
 import urllib.error
 import urllib.request
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
@@ -9,9 +11,10 @@ from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.utils import timezone
 
 from .forms import ContactForm
-from .models import Game
+from .models import Game, Wallet
 
 logger = logging.getLogger(__name__)
 
@@ -449,6 +452,89 @@ def bill_splitter(request):
     })
 
 
+# ---------- Fintech project 4: Mobile Money Wallet Simulator (stage 1: create a demo wallet) ----------
+
+STARTING_BALANCE = 50000    # fake RWF every new demo wallet starts with
+MAX_WALLETS = 300           # safety limit so the free database does not fill up
+WALLET_LIFETIME_DAYS = 7    # demo wallets older than this are deleted automatically
+
+
+def read_nickname(text, errors):
+    """Read a made-up nickname: 2 to 20 characters, letters, spaces and hyphens only.
+    Digits are not allowed, so nobody can type a phone number by mistake."""
+    text = ' '.join(text.split())      # remove extra spaces
+
+    if text == '':
+        errors.append("Please type a nickname for your demo wallet.")
+        return None
+    if not 2 <= len(text) <= 20:
+        errors.append("The nickname must be between 2 and 20 characters.")
+        return None
+    if not all(ch.isalpha() or ch in ' -' for ch in text):
+        errors.append("Use only letters, spaces and hyphens in the nickname (no numbers or symbols).")
+        return None
+    return text
+
+
+def make_wallet_number():
+    """Make a random, made-up wallet number like DW-482915 that no other wallet has."""
+    while True:
+        number = 'DW-' + str(secrets.randbelow(900000) + 100000)   # always 6 digits
+        if not Wallet.objects.filter(wallet_number=number).exists():
+            return number
+
+
+def wallet_simulator(request):
+    errors = []
+    nickname = ''
+
+    # 1. Does this visitor already have a demo wallet? (we remember it with the session)
+    wallet = None
+    wallet_id = request.session.get('wallet_id')
+    if wallet_id:
+        wallet = Wallet.objects.filter(id=wallet_id).first()
+        if wallet is None:
+            del request.session['wallet_id']    # the wallet was deleted, forget it
+
+    if request.method == 'POST':
+        mode = request.POST.get('mode', '')     # which button was pressed: 'create' or 'reset'
+
+        # ----- Start over: delete this visitor's demo wallet -----
+        if mode == 'reset':
+            if wallet is not None:
+                wallet.delete()
+            request.session.pop('wallet_id', None)
+            return redirect(reverse('wallet_simulator') + '#demo')
+
+        # ----- Create a demo wallet -----
+        if mode == 'create' and wallet is None:
+            nickname = request.POST.get('nickname', '').strip()
+            clean_nickname = read_nickname(nickname, errors)
+
+            # Tidy up: delete demo wallets older than 7 days
+            old = timezone.now() - timedelta(days=WALLET_LIFETIME_DAYS)
+            Wallet.objects.filter(created_at__lt=old).delete()
+
+            if not errors and Wallet.objects.count() >= MAX_WALLETS:
+                errors.append("The demo is full right now. Please try again later.")
+
+            if not errors:
+                wallet = Wallet.objects.create(
+                    nickname=clean_nickname,
+                    wallet_number=make_wallet_number(),
+                    balance=STARTING_BALANCE,
+                )
+                request.session['wallet_id'] = wallet.id
+                return redirect(reverse('wallet_simulator') + '#demo')     # avoids re-sending the form on refresh
+
+    return render(request, 'main/project_wallet_simulator.html', {
+        'wallet': wallet,
+        'errors': errors,
+        'nickname': nickname,
+        'starting_balance': STARTING_BALANCE,
+    })
+
+
 def projects(request):
     projects = [
         {
@@ -481,6 +567,14 @@ def projects(request):
             'description': 'Split a bill equally, or by what each person ordered, with an optional tip and shared cost. The shares always add up exactly. For learning, not financial advice.',
             'tech': ['Python', 'Django', 'Fintech'],
             'page': 'bill_splitter',     # opens the demo page on this site
+            'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
+        },
+        {
+            'icon': '📱',
+            'title': 'Mobile Money Wallet Simulator',
+            'description': 'Create a demo wallet with fake money and see how a mobile money wallet works. Built in stages: wallets, transfers, fees and history, and QR payment requests. Fake money only, for learning, not financial advice.',
+            'tech': ['Python', 'Django', 'Fintech'],
+            'page': 'wallet_simulator',  # opens the demo page on this site
             'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
         },
     ]

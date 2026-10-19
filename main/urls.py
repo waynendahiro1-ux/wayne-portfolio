@@ -15,4 +15,6 @@ urlpatterns = [
     path('projects/loan-calculator/', views.loan_calculator, name='loan_calculator'),
     # Fintech project 3
     path('projects/bill-splitter/', views.bill_splitter, name='bill_splitter'),
+    # Fintech project 4
+    path('projects/wallet-simulator/', views.wallet_simulator, name='wallet_simulator'),
 ]
