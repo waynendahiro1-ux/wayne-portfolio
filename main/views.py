@@ -9,12 +9,13 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib import messages
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
 
 from .forms import ContactForm
-from .models import Game, Wallet
+from .models import Game, Wallet, Transfer
 
 logger = logging.getLogger(__name__)
 
@@ -452,11 +453,21 @@ def bill_splitter(request):
     })
 
 
-# ---------- Fintech project 4: Mobile Money Wallet Simulator (stage 1: create a demo wallet) ----------
+# ---------- Fintech project 4: Mobile Money Wallet Simulator (stage 1: wallet, stage 2: send money) ----------
 
 STARTING_BALANCE = 50000    # fake RWF every new demo wallet starts with
 MAX_WALLETS = 300           # safety limit so the free database does not fill up
 WALLET_LIFETIME_DAYS = 7    # demo wallets older than this are deleted automatically
+FRIEND_NUMBER = 'DW-000000' # the permanent "Demo Friend" wallet (random numbers never start with 000)
+
+
+def get_demo_friend():
+    """Make sure the permanent Demo Friend wallet exists, so a visitor always has someone to send to."""
+    friend, created = Wallet.objects.get_or_create(
+        wallet_number=FRIEND_NUMBER,
+        defaults={'nickname': 'Demo Friend', 'balance': STARTING_BALANCE},
+    )
+    return friend
 
 
 def read_nickname(text, errors):
@@ -484,9 +495,56 @@ def make_wallet_number():
             return number
 
 
+def read_wallet_number(text, errors):
+    """Read the wallet number to send to. Accepts DW-482915, dw-482915 or just 482915."""
+    text = text.strip().upper().replace(' ', '')
+
+    if text == '':
+        errors.append("Please type the wallet number you want to send to.")
+        return None
+
+    if text.isdecimal() and len(text) == 6:
+        text = 'DW-' + text                 # allow the number without the DW- part
+
+    good_shape = len(text) == 9 and text.startswith('DW-') and text[3:].isdecimal() and text.isascii()
+    if not good_shape:
+        errors.append("A wallet number looks like DW-482915.")
+        return None
+    return text
+
+
+def do_transfer(sender_id, receiver_id, amount):
+    """Move fake money from one wallet to another. Returns an error message, or None if it worked.
+    transaction.atomic() means both balances change together, or neither changes.
+    select_for_update() locks the two wallets while we work, so two payments at the
+    same moment cannot spend the same money."""
+    with transaction.atomic():
+        locked = Wallet.objects.select_for_update().filter(id__in=[sender_id, receiver_id]).order_by('id')
+        wallets = {w.id: w for w in locked}
+        sender = wallets.get(sender_id)
+        receiver = wallets.get(receiver_id)
+
+        if sender is None or receiver is None:
+            return "One of the wallets no longer exists. Please try again."
+        if amount > sender.balance:
+            return "Not enough balance for that transfer."
+
+        sender.balance -= amount
+        receiver.balance += amount
+        sender.save(update_fields=['balance'])
+        receiver.save(update_fields=['balance'])
+        Transfer.objects.create(sender=sender, receiver=receiver, amount=amount)
+    return None
+
+
 def wallet_simulator(request):
-    errors = []
+    errors = []             # errors for the "create wallet" form
+    send_errors = []        # errors for the "send money" form
     nickname = ''
+    send_values = {'to': '', 'amount': ''}
+
+    # The permanent Demo Friend wallet always exists
+    get_demo_friend()
 
     # 1. Does this visitor already have a demo wallet? (we remember it with the session)
     wallet = None
@@ -496,8 +554,11 @@ def wallet_simulator(request):
         if wallet is None:
             del request.session['wallet_id']    # the wallet was deleted, forget it
 
+    # A one-time "money sent" message saved before the redirect
+    flash = request.session.pop('wallet_flash', None)
+
     if request.method == 'POST':
-        mode = request.POST.get('mode', '')     # which button was pressed: 'create' or 'reset'
+        mode = request.POST.get('mode', '')     # which button was pressed: 'create', 'send' or 'reset'
 
         # ----- Start over: delete this visitor's demo wallet -----
         if mode == 'reset':
@@ -511,11 +572,11 @@ def wallet_simulator(request):
             nickname = request.POST.get('nickname', '').strip()
             clean_nickname = read_nickname(nickname, errors)
 
-            # Tidy up: delete demo wallets older than 7 days
+            # Tidy up: delete demo wallets older than 7 days (never the Demo Friend)
             old = timezone.now() - timedelta(days=WALLET_LIFETIME_DAYS)
-            Wallet.objects.filter(created_at__lt=old).delete()
+            Wallet.objects.filter(created_at__lt=old).exclude(wallet_number=FRIEND_NUMBER).delete()
 
-            if not errors and Wallet.objects.count() >= MAX_WALLETS:
+            if not errors and Wallet.objects.exclude(wallet_number=FRIEND_NUMBER).count() >= MAX_WALLETS:
                 errors.append("The demo is full right now. Please try again later.")
 
             if not errors:
@@ -527,11 +588,47 @@ def wallet_simulator(request):
                 request.session['wallet_id'] = wallet.id
                 return redirect(reverse('wallet_simulator') + '#demo')     # avoids re-sending the form on refresh
 
+        # ----- Send money to another demo wallet -----
+        elif mode == 'send' and wallet is not None:
+            send_values['to'] = request.POST.get('to', '').strip()
+            send_values['amount'] = request.POST.get('amount', '').strip()
+
+            to_number = read_wallet_number(send_values['to'], send_errors)
+            amount = read_whole_number(send_values['amount'], 'The amount', send_errors, required=True)
+
+            if amount == 0:
+                send_errors.append("The amount must be more than 0.")
+
+            receiver = None
+            if not send_errors:
+                if to_number == wallet.wallet_number:
+                    send_errors.append("You cannot send money to your own wallet.")
+                else:
+                    receiver = Wallet.objects.filter(wallet_number=to_number).first()
+                    if receiver is None:
+                        send_errors.append(f"No demo wallet has the number {to_number}.")
+
+            if not send_errors:
+                problem = do_transfer(wallet.id, receiver.id, amount)
+                if problem:
+                    send_errors.append(problem)
+                else:
+                    wallet.refresh_from_db()    # get the new balance
+                    request.session['wallet_flash'] = (
+                        f"Sent {amount:,} RWF to {receiver.nickname} ({receiver.wallet_number}). "
+                        f"Your new balance is {wallet.balance:,} RWF."
+                    )
+                    return redirect(reverse('wallet_simulator') + '#send')
+
     return render(request, 'main/project_wallet_simulator.html', {
         'wallet': wallet,
         'errors': errors,
         'nickname': nickname,
         'starting_balance': STARTING_BALANCE,
+        'send_errors': send_errors,
+        'send_values': send_values,
+        'flash': flash,
+        'friend_number': FRIEND_NUMBER,
     })
 
 

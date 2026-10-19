@@ -38,6 +38,8 @@
 
   /* Form */
   .ws-box { border: 1px solid #334155; border-radius: .9rem; padding: 1.2rem; }
+  .ws-send { margin-top: 1.2rem; }
+  .ws-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .ws-field { margin-bottom: 1rem; }
   .ws-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
   .ws-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
@@ -54,13 +56,21 @@
   .ws-field input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
   .ws-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
 
-  /* Errors */
+  /* Errors and success */
   .ws-errors {
     background: rgba(239, 68, 68, .1);
     border: 1px solid rgba(239, 68, 68, .45);
     color: #fecaca;
     border-radius: .7rem;
     padding: .8rem 1rem .8rem 2rem;
+    margin-bottom: 1.2rem;
+  }
+  .ws-ok {
+    background: rgba(34, 197, 94, .1);
+    border: 1px solid rgba(34, 197, 94, .45);
+    color: #bbf7d0;
+    border-radius: .7rem;
+    padding: .8rem 1rem;
     margin-bottom: 1.2rem;
   }
 
@@ -78,11 +88,16 @@
   .ws-balance { font-size: clamp(1.7rem, 7vw, 2.4rem); font-weight: 800; color: #22d3ee; margin: .1rem 0 .6rem; }
   .ws-meta { color: #94a3b8; font-size: .85rem; margin: 0; }
   .ws-reset { margin-top: 1rem; }
+  .ws-hint { color: #94a3b8; font-size: .88rem; }
 
   .ws-coming { padding-left: 1.2rem; color: #cbd5e1; }
   .ws-coming li { margin-bottom: .4rem; }
   .ws-learn { padding-left: 1.2rem; color: #cbd5e1; }
   .ws-learn li { margin-bottom: .5rem; }
+
+  @media (max-width: 600px) {
+    .ws-row { grid-template-columns: 1fr; gap: 0; }
+  }
 </style>
 
 <div class="wrap ws-page">
@@ -95,8 +110,8 @@
     <h2>1. What it does</h2>
     <p>Mobile money wallets let people store, send and receive money on a phone. This project is a <strong>simulator</strong> of that idea, built in 4 stages:</p>
     <ol class="ws-coming">
-      <li><strong>Create a demo wallet</strong> (ready now)</li>
-      <li>Send money to another demo wallet (coming next)</li>
+      <li><strong>Create a demo wallet</strong> (ready)</li>
+      <li><strong>Send money</strong> to another demo wallet (ready now)</li>
       <li>Fees and transaction history (coming)</li>
       <li>QR payment request (coming)</li>
     </ol>
@@ -106,7 +121,7 @@
   <!-- 2. The demo -->
   <div class="card ws-section" id="demo">
     <h2>2. Try it</h2>
-    <span class="ws-stage">Stage 1 of 4: create a demo wallet</span>
+    <span class="ws-stage">Stage 2 of 4: send money</span>
 
     <div class="ws-note">
       ⚠️ For learning only. This is <strong>not financial advice</strong>. The money is <strong>fake</strong>. Please do not type your real name, phone number or any personal details. Use a made-up nickname.
@@ -121,6 +136,44 @@
         <p class="ws-label">Balance</p>
         <p class="ws-balance">{{ wallet.balance|floatformat:"0g" }} RWF</p>
         <p class="ws-meta">Created {{ wallet.created_at|date:"j M Y, H:i" }}. Demo wallets are deleted automatically after 7 days.</p>
+      </div>
+
+      <!-- Send money -->
+      <div class="ws-box ws-send" id="send">
+        <h3>Send money</h3>
+
+        {% if flash %}
+        <div class="ws-ok">✓ {{ flash }}</div>
+        {% endif %}
+
+        {% if send_errors %}
+        <ul class="ws-errors">
+          {% for e in send_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="post" action="{% url 'wallet_simulator' %}#send">
+          {% csrf_token %}
+          <input type="hidden" name="mode" value="send">
+
+          <div class="ws-row">
+            <div class="ws-field">
+              <label for="to">Send to (wallet number)</label>
+              <input type="text" id="to" name="to" value="{{ send_values.to }}" placeholder="e.g. {{ friend_number }}" maxlength="12" autocomplete="off">
+            </div>
+            <div class="ws-field">
+              <label for="amount">Amount (RWF)</label>
+              <input type="text" inputmode="numeric" id="amount" name="amount" value="{{ send_values.amount }}" placeholder="e.g. 5000" autocomplete="off">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary ws-button">Send fake money</button>
+        </form>
+
+        <p class="ws-hint" style="margin-top:1rem;">
+          Nobody to send to? Send to <strong>Demo Friend</strong>, wallet number <strong>{{ friend_number }}</strong>.
+          Or open this page in a private window, create a second wallet, and send between the two.
+        </p>
       </div>
 
       <form method="post" action="{% url 'wallet_simulator' %}#demo" class="ws-reset">
@@ -161,7 +214,7 @@
   <!-- 3. Why it matters -->
   <div class="card ws-section">
     <h2>3. Why it matters for fintech</h2>
-    <p>Mobile money is one of the most important fintech ideas in Africa. It lets people who do not use a bank send, receive and save money using only a phone. Every mobile money app starts with the same basic building block: a wallet that belongs to a user, has a unique number, and holds a balance that is stored safely and never goes below zero. Understanding that building block is the first step to understanding transfers, fees and payments.</p>
+    <p>Mobile money is one of the most important fintech ideas in Africa. It lets people who do not use a bank send, receive and save money using only a phone. Every mobile money app starts with the same basic building block: a wallet that belongs to a user, has a unique number, and holds a balance that is stored safely and never goes below zero. Sending money adds a second rule: a transfer must take money from one wallet and add the same amount to another, as one single step. If it only half-happens, money disappears or appears from nowhere. Understanding these rules is the first step to understanding fees, payments and how real money systems stay trustworthy.</p>
   </div>
 
   <!-- 4. What I learned -->
@@ -172,6 +225,9 @@
       <li>How to make a random wallet number and check that no other wallet already has it.</li>
       <li>How to use a Django session to remember a visitor without a login or any personal data.</li>
       <li>How to check what the visitor types, and why a wallet balance should never be able to go below zero.</li>
+      <li>How to move money between two wallets in one database transaction, so both balances change together or not at all.</li>
+      <li>How to block bad transfers: wallets that do not exist, sending to yourself, zero amounts and not enough balance.</li>
+      <li>How to lock the two wallets during a transfer, so two payments at the same time cannot spend the same money.</li>
     </ul>
   </div>
 
