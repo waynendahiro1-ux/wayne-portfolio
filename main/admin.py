@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ContactMessage, Game, Wallet, Transfer
+from .models import ContactMessage, Game, Wallet, Transfer, PaymentRequest
 
 
 @admin.register(ContactMessage)
@@ -23,3 +23,9 @@ class WalletAdmin(admin.ModelAdmin):
 @admin.register(Transfer)
 class TransferAdmin(admin.ModelAdmin):
     list_display = ('created_at', 'sender', 'receiver', 'amount', 'fee')
+
+
+@admin.register(PaymentRequest)
+class PaymentRequestAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'code', 'wallet', 'amount', 'status', 'paid_by')
+    list_filter = ('status',)

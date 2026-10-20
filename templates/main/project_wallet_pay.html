@@ -1,0 +1,120 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Pay a request | Wallet Simulator | Wayne Portfolio{% endblock %}
+
+{% block content %}
+<style>
+  .wp-page { max-width: 560px; }
+  .wp-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+  .wp-section { margin-bottom: 1.5rem; }
+  .wp-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
+
+  .wp-note {
+    background: rgba(250, 204, 21, 0.08);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    color: #fde68a;
+    border-radius: .7rem;
+    padding: .8rem 1rem;
+    font-size: .92rem;
+    margin-bottom: 1.4rem;
+  }
+  .wp-errors {
+    background: rgba(239, 68, 68, .1);
+    border: 1px solid rgba(239, 68, 68, .45);
+    color: #fecaca;
+    border-radius: .7rem;
+    padding: .8rem 1rem .8rem 2rem;
+    margin-bottom: 1.2rem;
+  }
+  .wp-ok {
+    background: rgba(34, 197, 94, .1);
+    border: 1px solid rgba(34, 197, 94, .45);
+    color: #bbf7d0;
+    border-radius: .7rem;
+    padding: .8rem 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .wp-card {
+    background: linear-gradient(135deg, rgba(34, 211, 238, .14), rgba(15, 23, 42, .9));
+    border: 1px solid rgba(34, 211, 238, .4);
+    border-radius: 1rem;
+    padding: 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+  .wp-tag { color: #fde68a; font-size: .78rem; font-weight: 700; letter-spacing: .08em; }
+  .wp-label { color: #94a3b8; font-size: .85rem; margin: .8rem 0 0; }
+  .wp-who { color: #fff; font-size: 1.2rem; font-weight: 700; margin: .1rem 0 0; }
+  .wp-number { color: #94a3b8; font-size: .92rem; letter-spacing: .06em; margin: 0; }
+  .wp-amount { font-size: clamp(1.7rem, 7vw, 2.4rem); font-weight: 800; color: #22d3ee; margin: .1rem 0 0; }
+  .wp-math { color: #cbd5e1; font-size: .92rem; margin: .6rem 0 0; }
+
+  .wp-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; width: 100%; }
+  .wp-hint { color: #94a3b8; font-size: .88rem; }
+</style>
+
+<div class="wrap wp-page">
+  <a href="{% url 'wallet_simulator' %}" class="wp-back">← Back to the Wallet Simulator</a>
+  <h1 class="page-title">Payment <span>request</span></h1>
+  <p class="page-subtitle">Part of the Mobile Money Wallet Simulator. Fake money only.</p>
+
+  <div class="card wp-section">
+    <div class="wp-note">
+      ⚠️ For learning only. This is <strong>not financial advice</strong>. The money is <strong>fake</strong> and no real payment happens here.
+    </div>
+
+    {% if not pr %}
+      <h2>Request not found</h2>
+      <p>This payment request does not exist. It may have been deleted, or the link was typed wrongly.</p>
+      <p><a href="{% url 'wallet_simulator' %}" class="btn-primary">Go to the Wallet Simulator</a></p>
+
+    {% else %}
+      {% if flash %}
+      <div class="wp-ok">✓ {{ flash }}</div>
+      {% endif %}
+
+      {% if errors %}
+      <ul class="wp-errors">
+        {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      <div class="wp-card">
+        <p class="wp-tag">DEMO PAYMENT REQUEST · FAKE MONEY</p>
+        <p class="wp-label">Pay to</p>
+        <p class="wp-who">{{ pr.wallet.nickname }}</p>
+        <p class="wp-number">Wallet number: {{ pr.wallet.wallet_number }}</p>
+        <p class="wp-label">Amount requested</p>
+        <p class="wp-amount">{{ pr.amount|floatformat:"0g" }} RWF</p>
+        <p class="wp-math">Demo fee: {{ fee|floatformat:"0g" }} RWF (paid by you, on top). Total taken from your wallet: <strong>{{ total|floatformat:"0g" }} RWF</strong>. {{ pr.wallet.nickname }} receives the full {{ pr.amount|floatformat:"0g" }} RWF.</p>
+      </div>
+
+      {% if state == 'paid' %}
+        <div class="wp-ok">✓ This request has been paid{% if pr.paid_by %} by {{ pr.paid_by.nickname }}{% endif %}. It cannot be paid again.</div>
+
+      {% elif state == 'cancelled' %}
+        <p>This request was cancelled by the person who made it. Nothing can be paid.</p>
+
+      {% elif state == 'expired' %}
+        <p>This request has expired. Ask for a new QR code.</p>
+
+      {% elif is_owner %}
+        <p>This is <strong>your own</strong> request, so you cannot pay it. Show the QR code to another demo wallet, or use the "Let Demo Friend pay this" button on the simulator page.</p>
+        <p><a href="{% url 'wallet_simulator' %}#requests" class="btn-primary">Back to my requests</a></p>
+
+      {% elif wallet %}
+        <p>You are paying from <strong>{{ wallet.nickname }}</strong> ({{ wallet.wallet_number }}). Your balance: <strong>{{ wallet.balance|floatformat:"0g" }} RWF</strong>.</p>
+        <form method="post" action="{% url 'wallet_pay' pr.code %}">
+          {% csrf_token %}
+          <input type="hidden" name="mode" value="pay">
+          <button type="submit" class="btn-primary wp-button">Pay {{ pr.amount|floatformat:"0g" }} RWF (+ {{ fee|floatformat:"0g" }} fee)</button>
+        </form>
+
+      {% else %}
+        <p>To pay this request you need a demo wallet with fake money. It takes a few seconds, and then you come straight back here.</p>
+        <p><a href="{% url 'wallet_simulator' %}?pay={{ pr.code }}#demo" class="btn-primary">Create a demo wallet</a></p>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -55,6 +55,8 @@
   }
   .ws-field input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
   .ws-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
+  .ws-small-button { border: 1px solid #334155; background: transparent; color: #cbd5e1; border-radius: .5rem; padding: .4rem .8rem; cursor: pointer; font-family: inherit; font-size: .85rem; }
+  .ws-small-button:hover { border-color: #22d3ee; color: #fff; }
 
   /* Errors and success */
   .ws-errors {
@@ -105,6 +107,17 @@
   .ws-minus { color: #fca5a5; font-weight: 700; }
   .ws-plus { color: #86efac; font-weight: 700; }
 
+  /* Payment requests and QR codes */
+  .ws-req { border: 1px solid #334155; border-radius: .8rem; padding: 1rem; margin-top: 1rem; }
+  .ws-req-top { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; }
+  .ws-pill { border-radius: 999px; padding: .15rem .7rem; font-size: .78rem; font-weight: 600; border: 1px solid #334155; color: #cbd5e1; }
+  .ws-pill-open { color: #fde68a; border-color: rgba(250, 204, 21, .45); }
+  .ws-pill-paid { color: #86efac; border-color: rgba(34, 197, 94, .5); }
+  .ws-qr { background: #ffffff; border-radius: .7rem; padding: .6rem; width: 100%; max-width: 240px; margin: .9rem auto .6rem; }
+  .ws-qr img { display: block; width: 100%; height: auto; }
+  .ws-link { word-break: break-all; font-size: .82rem; }
+  .ws-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .6rem; }
+
   .ws-coming { padding-left: 1.2rem; color: #cbd5e1; }
   .ws-coming li { margin-bottom: .4rem; }
   .ws-learn { padding-left: 1.2rem; color: #cbd5e1; }
@@ -127,16 +140,16 @@
     <ol class="ws-coming">
       <li><strong>Create a demo wallet</strong> (ready)</li>
       <li><strong>Send money</strong> to another demo wallet (ready)</li>
-      <li><strong>Fees and transaction history</strong> (ready now)</li>
-      <li>QR payment request (coming)</li>
+      <li><strong>Fees and transaction history</strong> (ready)</li>
+      <li><strong>QR payment request:</strong> ask for money with a QR code that another demo wallet scans and pays (ready now)</li>
     </ol>
-    <p>Everything here is fake. No real money, no real accounts and no personal data. The fees are made-up demo fees, not the fees of any real company.</p>
+    <p>Everything here is fake. No real money, no real accounts and no personal data. The fees are made-up demo fees, not the fees of any real company. The QR codes only hold a link to this demo page, never real payment details.</p>
   </div>
 
   <!-- 2. The demo -->
   <div class="card ws-section" id="demo">
     <h2>2. Try it</h2>
-    <span class="ws-stage">Stage 3 of 4: fees and history</span>
+    <span class="ws-stage">Stage 4 of 4: QR payment request</span>
 
     <div class="ws-note">
       ⚠️ For learning only. This is <strong>not financial advice</strong>. The money is <strong>fake</strong>. Please do not type your real name, phone number or any personal details. Use a made-up nickname.
@@ -207,6 +220,71 @@
         </p>
       </div>
 
+      <!-- Payment requests (QR) -->
+      <div class="ws-box ws-send" id="requests">
+        <h3>Ask for money (QR payment request)</h3>
+        <p class="ws-hint">Type an amount and make a request. It turns into a QR code. Another demo wallet scans it, opens a pay page and pays you. The QR code holds only a link to this demo, never real payment details. Requests expire after {{ lifetime_hours }} hours.</p>
+
+        {% if request_flash %}
+        <div class="ws-ok">✓ {{ request_flash }}</div>
+        {% endif %}
+
+        {% if request_errors %}
+        <ul class="ws-errors">
+          {% for e in request_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="post" action="{% url 'wallet_simulator' %}#requests">
+          {% csrf_token %}
+          <input type="hidden" name="mode" value="create_request">
+
+          <div class="ws-field">
+            <label for="request_amount">Amount to ask for (RWF)</label>
+            <input type="text" inputmode="numeric" id="request_amount" name="request_amount" value="{{ request_values.amount }}" placeholder="e.g. 2000" autocomplete="off">
+            <small>You can have up to {{ max_open_requests }} open requests at a time. The person who pays also pays the demo fee. You get the full amount.</small>
+          </div>
+
+          <button type="submit" class="btn-primary ws-button">Create payment request</button>
+        </form>
+
+        {% for r in requests_list %}
+        <div class="ws-req">
+          <div class="ws-req-top">
+            <strong>{{ r.amount|floatformat:"0g" }} RWF</strong>
+            {% if r.state == 'open' %}<span class="ws-pill ws-pill-open">Waiting for payment</span>
+            {% elif r.state == 'paid' %}<span class="ws-pill ws-pill-paid">Paid</span>
+            {% elif r.state == 'cancelled' %}<span class="ws-pill">Cancelled</span>
+            {% else %}<span class="ws-pill">Expired</span>{% endif %}
+          </div>
+
+          {% if r.state == 'open' %}
+            <div class="ws-qr">
+              <img src="{{ r.qr }}" alt="QR code for a demo payment request of {{ r.amount }} RWF" width="240" height="240">
+            </div>
+            <p class="ws-hint" style="text-align:center;">Scan it with a phone camera, or open the link:</p>
+            <p class="ws-hint ws-link" style="text-align:center;"><a href="{{ r.url }}" target="_blank">{{ r.url }}</a></p>
+            <div class="ws-actions">
+              <form method="post" action="{% url 'wallet_simulator' %}#requests">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="friend_pays">
+                <input type="hidden" name="request_id" value="{{ r.id }}">
+                <button type="submit" class="ws-small-button">Let Demo Friend pay this</button>
+              </form>
+              <form method="post" action="{% url 'wallet_simulator' %}#requests">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="cancel_request">
+                <input type="hidden" name="request_id" value="{{ r.id }}">
+                <button type="submit" class="ws-small-button">Cancel request</button>
+              </form>
+            </div>
+          {% elif r.state == 'paid' %}
+            <p class="ws-meta" style="margin-top:.5rem;">Paid by {{ r.paid_by|default:"a wallet that has since been deleted" }}. You received the full {{ r.amount|floatformat:"0g" }} RWF.</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
       <!-- Transaction history -->
       <div class="ws-box ws-send" id="history">
         <h3>Your transaction history</h3>
@@ -246,6 +324,10 @@
       <div class="ws-box">
         <h3>Create your demo wallet</h3>
 
+        {% if pay_code %}
+        <div class="ws-ok">You opened a payment request. Create a demo wallet first, then you will go straight back to pay it.</div>
+        {% endif %}
+
         {% if errors %}
         <ul class="ws-errors">
           {% for e in errors %}<li>{{ e }}</li>{% endfor %}
@@ -255,6 +337,7 @@
         <form method="post" action="{% url 'wallet_simulator' %}#demo">
           {% csrf_token %}
           <input type="hidden" name="mode" value="create">
+          {% if pay_code %}<input type="hidden" name="pay" value="{{ pay_code }}">{% endif %}
 
           <div class="ws-field">
             <label for="nickname">Nickname</label>
@@ -273,7 +356,7 @@
   <!-- 3. Why it matters -->
   <div class="card ws-section">
     <h2>3. Why it matters for fintech</h2>
-    <p>Mobile money is one of the most important fintech ideas in Africa. It lets people who do not use a bank send, receive and save money using only a phone. Every mobile money app starts with the same basic building block: a wallet that belongs to a user, has a unique number, and holds a balance that is stored safely and never goes below zero. Sending money adds a second rule: a transfer must take money from one wallet and add the same amount to another, as one single step. If it only half-happens, money disappears or appears from nowhere. Fees add a third rule: the fee must go somewhere, so the books always balance. Providers earn their income from fees, and users need a clear history to see where their money went. Understanding these rules is the first step to understanding how real money systems stay trustworthy.</p>
+    <p>Mobile money is one of the most important fintech ideas in Africa. It lets people who do not use a bank send, receive and save money using only a phone. Every mobile money app starts with the same basic building block: a wallet that belongs to a user, has a unique number, and holds a balance that is stored safely and never goes below zero. Sending money adds a second rule: a transfer must take money from one wallet and add the same amount to another, as one single step. If it only half-happens, money disappears or appears from nowhere. Fees add a third rule: the fee must go somewhere, so the books always balance. Providers earn their income from fees, and users need a clear history to see where their money went. QR payments add a fourth: a request must be paid only once, by the right person, before it expires. Shops and street vendors use QR codes so customers can pay without typing a number. Understanding these rules is the first step to understanding how real money systems stay trustworthy.</p>
   </div>
 
   <!-- 4. What I learned -->
@@ -289,6 +372,8 @@
       <li>How to lock the wallets during a transfer, so two payments at the same time cannot spend the same money.</li>
       <li>How to add a fee from a table of amount bands, and why the fee has to be paid to a wallet so no franc disappears.</li>
       <li>How to build a transaction history from the transfer records, showing money sent (with the fee) and money received.</li>
+      <li>How a QR code works as a link: it only holds a web address, and the real payment happens on the server, so no payment details are ever stored in the picture.</li>
+      <li>How to make sure a payment request can only be paid once, by locking it in the database, and how to expire or cancel old requests.</li>
     </ul>
   </div>
 

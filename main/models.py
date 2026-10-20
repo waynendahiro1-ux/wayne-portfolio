@@ -57,3 +57,21 @@ class Transfer(models.Model):
 
     def __str__(self):
         return f"{self.sender.wallet_number} to {self.receiver.wallet_number}: {self.amount} RWF (fee {self.fee})"
+
+
+class PaymentRequest(models.Model):
+    """A demo payment request (stage 4). The wallet that creates it will RECEIVE the money.
+    The QR code holds only a link to the pay page for this request's code."""
+    code = models.CharField(max_length=8, unique=True)              # short random code used in the link
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='payment_requests')
+    amount = models.PositiveBigIntegerField()                       # fake RWF being asked for
+    status = models.CharField(max_length=10, default='open')        # open, paid or cancelled
+    paid_by = models.ForeignKey(Wallet, null=True, blank=True, on_delete=models.SET_NULL, related_name='paid_requests')
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']  # newest request first
+
+    def __str__(self):
+        return f"{self.code}: {self.amount} RWF ({self.status})"

@@ -7,6 +7,7 @@ from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
+import segno
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
@@ -16,7 +17,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import ContactForm
-from .models import Game, Wallet, Transfer
+from .models import Game, Wallet, Transfer, PaymentRequest
 
 logger = logging.getLogger(__name__)
 
@@ -454,7 +455,8 @@ def bill_splitter(request):
     })
 
 
-# ---------- Fintech project 4: Mobile Money Wallet Simulator (stage 1: wallet, 2: send money, 3: fees and history) ----------
+# ---------- Fintech project 4: Mobile Money Wallet Simulator ----------
+# Stage 1: wallet. Stage 2: send money. Stage 3: fees and history. Stage 4: QR payment request.
 
 STARTING_BALANCE = 50000    # fake RWF every new demo wallet starts with
 MAX_WALLETS = 300           # safety limit so the free database does not fill up
@@ -462,6 +464,10 @@ WALLET_LIFETIME_DAYS = 7    # demo wallets older than this are deleted automatic
 FRIEND_NUMBER = 'DW-000000'     # the permanent "Demo Friend" wallet (random numbers never start with 000)
 OPERATOR_NUMBER = 'DW-000001'   # the permanent "Demo Operator" wallet that receives all the fees
 SPECIAL_NUMBERS = [FRIEND_NUMBER, OPERATOR_NUMBER]   # these two are never deleted and do not count toward the cap
+
+REQUEST_LIFETIME_HOURS = 24     # an unpaid payment request expires after this many hours
+MAX_OPEN_REQUESTS = 5           # one wallet can have at most this many open requests
+CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'   # letters and digits that are hard to mix up (no O, 0, I, 1)
 
 # The DEMO fee table. These are MADE-UP fees for learning, NOT real MTN or Airtel fees.
 # Each line is (biggest amount in this band, fee in RWF). Change the numbers to try your own table.
@@ -583,7 +589,7 @@ def do_transfer(sender_id, receiver_id, amount):
         if amount + fee > sender.balance:
             return (
                 f"Not enough balance. This transfer needs {amount:,} + {fee:,} fee = {amount + fee:,} RWF, "
-                f"and your balance is {sender.balance:,} RWF."
+                f"and the balance is {sender.balance:,} RWF."
             ), fee
 
         sender.balance -= amount + fee
@@ -626,29 +632,134 @@ def build_history(wallet):
     return rows
 
 
+# ----- Stage 4: QR payment requests -----
+
+def get_session_wallet(request):
+    """Find this visitor's demo wallet from the session. Returns None if they have none."""
+    wallet_id = request.session.get('wallet_id')
+    if not wallet_id:
+        return None
+    wallet = Wallet.objects.filter(id=wallet_id).first()
+    if wallet is None:
+        request.session.pop('wallet_id', None)      # the wallet was deleted, forget it
+    return wallet
+
+
+def make_request_code():
+    """Make a random 8-character code like K7M2XQ4P that no other payment request has."""
+    while True:
+        code = ''.join(secrets.choice(CODE_LETTERS) for _ in range(8))
+        if not PaymentRequest.objects.filter(code=code).exists():
+            return code
+
+
+def request_status(pr):
+    """The real state of a request: open, paid, cancelled or expired."""
+    if pr.status == 'open' and pr.created_at <= timezone.now() - timedelta(hours=REQUEST_LIFETIME_HOURS):
+        return 'expired'
+    return pr.status
+
+
+def count_open_requests(wallet):
+    """How many requests from this wallet are still open (not paid, cancelled or expired)."""
+    cutoff = timezone.now() - timedelta(hours=REQUEST_LIFETIME_HOURS)
+    return PaymentRequest.objects.filter(wallet=wallet, status='open', created_at__gt=cutoff).count()
+
+
+def pay_url(request, code):
+    """The full link that goes inside the QR code, like https://.../pay/K7M2XQ4P/"""
+    url = request.build_absolute_uri(reverse('wallet_pay', args=[code]))
+    host = request.get_host().split(':')[0]
+    if host not in ('127.0.0.1', 'localhost') and url.startswith('http://'):
+        url = 'https://' + url[len('http://'):]     # Render serves the site over https
+    return url
+
+
+def make_qr(url):
+    """Turn a link into a QR code picture. Returns a data URI that can go straight into <img src>."""
+    return segno.make(url, error='m').png_data_uri(scale=6, border=3)
+
+
+def pay_request(code, payer):
+    """Pay a payment request from the payer's wallet. Returns (error message or None, fee).
+    The request row is locked, so the same request can never be paid twice."""
+    with transaction.atomic():
+        pr = PaymentRequest.objects.select_for_update().filter(code=code).first()
+        if pr is None:
+            return "This payment request does not exist.", 0
+
+        fee = calculate_fee(pr.amount)
+        state = request_status(pr)
+        if state == 'paid':
+            return "This request has already been paid.", fee
+        if state == 'cancelled':
+            return "This request was cancelled.", fee
+        if state == 'expired':
+            return "This request has expired.", fee
+        if pr.wallet_id == payer.id:
+            return "You cannot pay your own request.", fee
+
+        # Same transfer as stage 3: the payer pays amount + fee, the requester gets the full amount
+        problem, fee = do_transfer(payer.id, pr.wallet_id, pr.amount)
+        if problem:
+            return problem, fee
+
+        pr.status = 'paid'
+        pr.paid_by_id = payer.id
+        pr.paid_at = timezone.now()
+        pr.save(update_fields=['status', 'paid_by', 'paid_at'])
+    return None, fee
+
+
+def build_request_list(request, wallet):
+    """This wallet's latest 10 payment requests, with a QR code for each open one."""
+    rows = []
+    requests_found = PaymentRequest.objects.filter(wallet=wallet).select_related('paid_by').order_by('-created_at', '-id')[:10]
+    for r in requests_found:
+        state = request_status(r)
+        row = {
+            'id': r.id,
+            'amount': r.amount,
+            'fee': calculate_fee(r.amount),
+            'state': state,
+            'paid_by': r.paid_by.nickname if r.paid_by else '',
+            'created': r.created_at,
+            'url': '',
+            'qr': '',
+        }
+        if state == 'open':
+            row['url'] = pay_url(request, r.code)
+            row['qr'] = make_qr(row['url'])
+        rows.append(row)
+    return rows
+
+
 def wallet_simulator(request):
     errors = []             # errors for the "create wallet" form
     send_errors = []        # errors for the "send money" form
+    request_errors = []     # errors for the "payment request" box
     nickname = ''
     send_values = {'to': '', 'amount': ''}
+    request_values = {'amount': ''}
 
     # The permanent Demo Friend and Demo Operator wallets always exist
     get_demo_friend()
     get_demo_operator()
 
     # 1. Does this visitor already have a demo wallet? (we remember it with the session)
-    wallet = None
-    wallet_id = request.session.get('wallet_id')
-    if wallet_id:
-        wallet = Wallet.objects.filter(id=wallet_id).first()
-        if wallet is None:
-            del request.session['wallet_id']    # the wallet was deleted, forget it
+    wallet = get_session_wallet(request)
 
-    # A one-time "money sent" message saved before the redirect
+    # If the visitor came from a payment request link, remember which one (only if it really exists)
+    pay_code = (request.POST.get('pay') or request.GET.get('pay') or '').strip().upper()[:8]
+    if pay_code and not PaymentRequest.objects.filter(code=pay_code).exists():
+        pay_code = ''
+
+    # One-time messages saved before a redirect
     flash = request.session.pop('wallet_flash', None)
+    request_flash = request.session.pop('request_flash', None)
 
     if request.method == 'POST':
-        mode = request.POST.get('mode', '')     # which button was pressed: 'create', 'send' or 'reset'
+        mode = request.POST.get('mode', '')     # which button was pressed
 
         # ----- Start over: delete this visitor's demo wallet -----
         if mode == 'reset':
@@ -676,6 +787,8 @@ def wallet_simulator(request):
                     balance=STARTING_BALANCE,
                 )
                 request.session['wallet_id'] = wallet.id
+                if pay_code:
+                    return redirect(reverse('wallet_pay', args=[pay_code]))   # back to the payment request they scanned
                 return redirect(reverse('wallet_simulator') + '#demo')     # avoids re-sending the form on refresh
 
         # ----- Send money to another demo wallet -----
@@ -711,7 +824,56 @@ def wallet_simulator(request):
                     )
                     return redirect(reverse('wallet_simulator') + '#send')
 
+        # ----- Create a payment request (shown as a QR code) -----
+        elif mode == 'create_request' and wallet is not None:
+            request_values['amount'] = request.POST.get('request_amount', '').strip()
+            amount = read_whole_number(request_values['amount'], 'The amount', request_errors, required=True)
+
+            if amount == 0:
+                request_errors.append("The amount must be more than 0.")
+            if not request_errors and count_open_requests(wallet) >= MAX_OPEN_REQUESTS:
+                request_errors.append(
+                    f"You already have {MAX_OPEN_REQUESTS} open requests. Cancel one or wait for it to be paid."
+                )
+
+            if not request_errors:
+                PaymentRequest.objects.create(code=make_request_code(), wallet=wallet, amount=amount)
+                request.session['request_flash'] = (
+                    f"Payment request for {amount:,} RWF created. Show the QR code to another demo wallet."
+                )
+                return redirect(reverse('wallet_simulator') + '#requests')
+
+        # ----- Cancel one of my open payment requests -----
+        elif mode == 'cancel_request' and wallet is not None:
+            request_id = request.POST.get('request_id', '')
+            if request_id.isdecimal():
+                PaymentRequest.objects.filter(id=int(request_id), wallet=wallet, status='open').update(status='cancelled')
+                request.session['request_flash'] = "Payment request cancelled."
+            return redirect(reverse('wallet_simulator') + '#requests')
+
+        # ----- Let the Demo Friend pay my request (so I can try it alone) -----
+        elif mode == 'friend_pays' and wallet is not None:
+            request_id = request.POST.get('request_id', '')
+            pr = None
+            if request_id.isdecimal():
+                pr = PaymentRequest.objects.filter(id=int(request_id), wallet=wallet).first()
+
+            if pr is None:
+                request_errors.append("That payment request was not found.")
+            else:
+                problem, fee = pay_request(pr.code, get_demo_friend())
+                if problem:
+                    request_errors.append("Demo Friend could not pay this request. " + problem)
+                else:
+                    wallet.refresh_from_db()
+                    request.session['request_flash'] = (
+                        f"Demo Friend paid your request of {pr.amount:,} RWF. "
+                        f"Your new balance is {wallet.balance:,} RWF."
+                    )
+                    return redirect(reverse('wallet_simulator') + '#requests')
+
     history = build_history(wallet) if wallet is not None else []
+    requests_list = build_request_list(request, wallet) if wallet is not None else []
 
     return render(request, 'main/project_wallet_simulator.html', {
         'wallet': wallet,
@@ -725,6 +887,52 @@ def wallet_simulator(request):
         'operator_number': OPERATOR_NUMBER,
         'fee_rows': fee_table_rows(),
         'history': history,
+        'request_errors': request_errors,
+        'request_values': request_values,
+        'request_flash': request_flash,
+        'requests_list': requests_list,
+        'max_open_requests': MAX_OPEN_REQUESTS,
+        'lifetime_hours': REQUEST_LIFETIME_HOURS,
+        'pay_code': pay_code,
+    })
+
+
+def wallet_pay(request, code):
+    """The page that opens when someone scans a payment request QR code."""
+    code = code.strip().upper()[:20]
+    wallet = get_session_wallet(request)
+    errors = []
+    flash = request.session.pop('wallet_flash', None)
+
+    # ----- Pay the request -----
+    if request.method == 'POST' and request.POST.get('mode') == 'pay' and wallet is not None:
+        problem, fee = pay_request(code, wallet)
+        if problem:
+            errors.append(problem)
+        else:
+            paid = PaymentRequest.objects.select_related('wallet').filter(code=code).first()
+            wallet.refresh_from_db()
+            request.session['wallet_flash'] = (
+                f"You paid {paid.amount:,} RWF to {paid.wallet.nickname} ({paid.wallet.wallet_number}). "
+                f"Fee: {fee:,} RWF. Total taken from your wallet: {paid.amount + fee:,} RWF. "
+                f"Your new balance is {wallet.balance:,} RWF."
+            )
+            return redirect(reverse('wallet_pay', args=[code]))
+
+    pr = PaymentRequest.objects.select_related('wallet', 'paid_by').filter(code=code).first()
+    if pr is None:
+        return render(request, 'main/project_wallet_pay.html', {'pr': None}, status=404)
+
+    fee = calculate_fee(pr.amount)
+    return render(request, 'main/project_wallet_pay.html', {
+        'pr': pr,
+        'state': request_status(pr),
+        'fee': fee,
+        'total': pr.amount + fee,
+        'wallet': wallet,
+        'is_owner': wallet is not None and wallet.id == pr.wallet_id,
+        'errors': errors,
+        'flash': flash,
     })
 
 
@@ -765,7 +973,7 @@ def projects(request):
         {
             'icon': '📱',
             'title': 'Mobile Money Wallet Simulator',
-            'description': 'Create a demo wallet with fake money, send it to other demo wallets, see the fees and your transaction history. Built in stages, with QR payment requests coming next. Fake money only, for learning, not financial advice.',
+            'description': 'Create a demo wallet with fake money, send it to other demo wallets, see fees and your transaction history, and ask for money with a QR payment request. Fake money only, for learning, not financial advice.',
             'tech': ['Python', 'Django', 'Fintech'],
             'page': 'wallet_simulator',  # opens the demo page on this site
             'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
