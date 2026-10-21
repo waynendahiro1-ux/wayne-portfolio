@@ -75,3 +75,32 @@ class PaymentRequest(models.Model):
 
     def __str__(self):
         return f"{self.code}: {self.amount} RWF ({self.status})"
+
+
+class Budget(models.Model):
+    """A DEMO budget for the Budget Tracker (fintech project 5). Typed-in fake numbers only."""
+    name = models.CharField(max_length=20)                          # a made-up name, never a real name
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']  # newest budget first
+
+    def __str__(self):
+        return self.name
+
+
+class BudgetEntry(models.Model):
+    """One line in a budget: money that came in (income) or went out (expense)."""
+    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name='entries')   # deleting a budget deletes its entries
+    kind = models.CharField(max_length=10)                          # 'income' or 'expense' (worked out from the category)
+    category = models.CharField(max_length=30)                      # for example Food or Pocket money
+    label = models.CharField(max_length=30, blank=True)             # optional short note
+    amount = models.PositiveBigIntegerField()                       # fake RWF, whole francs only
+    date = models.DateField()                                       # the day the money moved
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-id']  # newest day first
+
+    def __str__(self):
+        return f"{self.date} {self.category}: {self.amount} RWF ({self.kind})"

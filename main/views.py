@@ -3,7 +3,7 @@ import logging
 import secrets
 import urllib.error
 import urllib.request
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
@@ -17,7 +17,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import ContactForm
-from .models import Game, Wallet, Transfer, PaymentRequest
+from .models import Game, Wallet, Transfer, PaymentRequest, Budget, BudgetEntry
 
 logger = logging.getLogger(__name__)
 
@@ -936,6 +936,214 @@ def wallet_pay(request, code):
     })
 
 
+# ---------- Fintech project 5: Budget Tracker ----------
+# Stage 1: start a budget and add entries. Stage 2: summary with totals. Stage 3: limits and polish.
+
+BUDGET_LIFETIME_DAYS = 7    # demo budgets older than this are deleted automatically
+MAX_BUDGETS = 200           # safety limit so the free database does not fill up
+MAX_ENTRIES = 60            # the most entries one budget can hold
+
+# The category lists. You can change these words WITHOUT making a migration.
+# Every word must be different across BOTH lists, because the kind (income or spending)
+# is worked out from the category the visitor picks. Savings counts as spending.
+INCOME_CATEGORIES = ['Pocket money', 'Gift', 'Side job', 'Other income']
+EXPENSE_CATEGORIES = ['Food', 'Transport', 'Airtime and data', 'School', 'Savings', 'Family', 'Fun', 'Other spending']
+
+
+def read_budget_name(text, errors):
+    """Read a made-up budget name: 2 to 20 characters, letters, spaces and hyphens only.
+    Digits are not allowed, so nobody can type a phone number by mistake."""
+    text = ' '.join(text.split())      # remove extra spaces
+
+    if text == '':
+        errors.append("Please type a name for your demo budget.")
+        return None
+    if not 2 <= len(text) <= 20:
+        errors.append("The budget name must be between 2 and 20 characters.")
+        return None
+    if not all(ch.isalpha() or ch in ' -' for ch in text):
+        errors.append("Use only letters, spaces and hyphens in the budget name (no numbers or symbols).")
+        return None
+    return text
+
+
+def read_entry_label(text, errors):
+    """Read the optional short note: up to 30 characters, letters, spaces and hyphens only.
+    A blank note is fine and gives an empty text."""
+    text = ' '.join(text.split())
+
+    if text == '':
+        return ''
+    if len(text) > 30:
+        errors.append("The note must be 30 characters or fewer.")
+        return ''
+    if not all(ch.isalpha() or ch in ' -' for ch in text):
+        errors.append("Use only letters, spaces and hyphens in the note (no numbers or symbols).")
+        return ''
+    return text
+
+
+def read_entry_category(text, errors):
+    """Check the chosen category is on one of the two lists.
+    Returns (kind, category). The kind is 'income' or 'expense', worked out from the category."""
+    text = text.strip()
+
+    if text in INCOME_CATEGORIES:
+        return 'income', text
+    if text in EXPENSE_CATEGORIES:
+        return 'expense', text
+    errors.append("Please choose a category from the list.")
+    return None, None
+
+
+def read_entry_date(text, errors):
+    """Read the date from the date box (it looks like 2026-10-21).
+    Not more than 1 day in the future, and not more than a year ago."""
+    text = text.strip()
+
+    if text == '':
+        errors.append("Please pick a date.")
+        return None
+    try:
+        day = date.fromisoformat(text)
+    except ValueError:
+        errors.append("The date must look like 2026-10-21. Use the date picker.")
+        return None
+
+    today = timezone.now().date()
+    if day > today + timedelta(days=1):         # 1 day of room for time zone differences
+        errors.append("The date cannot be in the future.")
+        return None
+    if day < today - timedelta(days=365):
+        errors.append("The date cannot be more than a year ago.")
+        return None
+    return day
+
+
+def get_session_budget(request):
+    """Find this visitor's demo budget from the session. Returns None if they have none."""
+    budget_id = request.session.get('budget_id')
+    if not budget_id:
+        return None
+    budget = Budget.objects.filter(id=budget_id).first()
+    if budget is None:
+        request.session.pop('budget_id', None)     # the budget was deleted, forget it
+    return budget
+
+
+def build_entry_rows(budget):
+    """Make the list of this budget's entries for the table, newest date first."""
+    rows = []
+    for entry in budget.entries.order_by('-date', '-id'):
+        rows.append({
+            'id': entry.id,
+            'date': entry.date,
+            'kind': entry.kind,
+            'category': entry.category,
+            'label': entry.label,
+            'amount': entry.amount,
+        })
+    return rows
+
+
+def budget_tracker(request):
+    today = timezone.now().date()
+    errors = []             # errors for the "start a budget" form
+    entry_errors = []       # errors for the "add an entry" form
+    name = ''
+    # What the visitor typed, so the boxes keep their values if something is wrong
+    entry_values = {'category': '', 'amount': '', 'date': today.isoformat(), 'label': ''}
+
+    # 1. Does this visitor already have a demo budget? (we remember it with the session)
+    budget = get_session_budget(request)
+
+    # One-time message saved before a redirect
+    flash = request.session.pop('budget_flash', None)
+
+    if request.method == 'POST':
+        mode = request.POST.get('mode', '')     # which button was pressed
+
+        # ----- Start over: delete this visitor's budget and all its entries -----
+        if mode == 'reset':
+            if budget is not None:
+                budget.delete()
+            request.session.pop('budget_id', None)
+            return redirect(reverse('budget_tracker') + '#demo')
+
+        # ----- Start a demo budget -----
+        if mode == 'create' and budget is None:
+            name = request.POST.get('name', '').strip()
+            clean_name = read_budget_name(name, errors)
+
+            # Tidy up: delete demo budgets older than 7 days (their entries go with them)
+            old = timezone.now() - timedelta(days=BUDGET_LIFETIME_DAYS)
+            Budget.objects.filter(created_at__lt=old).delete()
+
+            if not errors and Budget.objects.count() >= MAX_BUDGETS:
+                errors.append("The demo is full right now. Please try again later.")
+
+            if not errors:
+                budget = Budget.objects.create(name=clean_name)
+                request.session['budget_id'] = budget.id
+                return redirect(reverse('budget_tracker') + '#demo')     # avoids re-sending the form on refresh
+
+        # ----- Add an entry (income or spending) -----
+        elif mode == 'add_entry' and budget is not None:
+            entry_values['category'] = request.POST.get('category', '').strip()
+            entry_values['amount'] = request.POST.get('amount', '').strip()
+            entry_values['date'] = request.POST.get('entry_date', '').strip()
+            entry_values['label'] = request.POST.get('label', '').strip()
+
+            kind, category = read_entry_category(entry_values['category'], entry_errors)
+            amount = read_whole_number(entry_values['amount'], 'The amount', entry_errors, required=True)
+            entry_day = read_entry_date(entry_values['date'], entry_errors)
+            label = read_entry_label(entry_values['label'], entry_errors)
+
+            if amount == 0:
+                entry_errors.append("The amount must be more than 0.")
+            if not entry_errors and budget.entries.count() >= MAX_ENTRIES:
+                entry_errors.append(f"This budget already has {MAX_ENTRIES} entries. Delete one to add another.")
+
+            if not entry_errors:
+                BudgetEntry.objects.create(
+                    budget=budget,
+                    kind=kind,
+                    category=category,
+                    label=label,
+                    amount=amount,
+                    date=entry_day,
+                )
+                kind_word = 'income' if kind == 'income' else 'spending'
+                request.session['budget_flash'] = f"Added {kind_word}: {amount:,} RWF ({category})."
+                return redirect(reverse('budget_tracker') + '#entries')
+
+        # ----- Delete one entry (only from this visitor's own budget) -----
+        elif mode == 'delete_entry' and budget is not None:
+            entry_id = request.POST.get('entry_id', '')
+            if entry_id.isdecimal() and len(entry_id) <= 12:
+                BudgetEntry.objects.filter(id=int(entry_id), budget=budget).delete()
+                request.session['budget_flash'] = "Entry deleted."
+            return redirect(reverse('budget_tracker') + '#entries')
+
+    entries = build_entry_rows(budget) if budget is not None else []
+
+    return render(request, 'main/project_budget_tracker.html', {
+        'budget': budget,
+        'errors': errors,
+        'name': name,
+        'entry_errors': entry_errors,
+        'entry_values': entry_values,
+        'flash': flash,
+        'entries': entries,
+        'income_categories': INCOME_CATEGORIES,
+        'expense_categories': EXPENSE_CATEGORIES,
+        'max_entries': MAX_ENTRIES,
+        'lifetime_days': BUDGET_LIFETIME_DAYS,
+        'min_date': (today - timedelta(days=365)).isoformat(),
+        'max_date': (today + timedelta(days=1)).isoformat(),
+    })
+
+
 def projects(request):
     projects = [
         {
@@ -976,6 +1184,14 @@ def projects(request):
             'description': 'Create a demo wallet with fake money, send it to other demo wallets, see fees and your transaction history, and ask for money with a QR payment request. Fake money only, for learning, not financial advice.',
             'tech': ['Python', 'Django', 'Fintech'],
             'page': 'wallet_simulator',  # opens the demo page on this site
+            'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
+        },
+        {
+            'icon': '📊',
+            'title': 'Budget Tracker',
+            'description': 'Start a demo budget, then add your income and spending with a category, an amount and a date. Everything is saved in a database. Typed-in numbers only, for learning, not financial advice.',
+            'tech': ['Python', 'Django', 'Database', 'Fintech'],
+            'page': 'budget_tracker',    # opens the demo page on this site
             'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
         },
     ]

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ContactMessage, Game, Wallet, Transfer, PaymentRequest
+from .models import ContactMessage, Game, Wallet, Transfer, PaymentRequest, Budget, BudgetEntry
 
 
 @admin.register(ContactMessage)
@@ -29,3 +29,15 @@ class TransferAdmin(admin.ModelAdmin):
 class PaymentRequestAdmin(admin.ModelAdmin):
     list_display = ('created_at', 'code', 'wallet', 'amount', 'status', 'paid_by')
     list_filter = ('status',)
+
+
+@admin.register(Budget)
+class BudgetAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at')
+    search_fields = ('name',)
+
+
+@admin.register(BudgetEntry)
+class BudgetEntryAdmin(admin.ModelAdmin):
+    list_display = ('date', 'budget', 'kind', 'category', 'label', 'amount')
+    list_filter = ('kind', 'category')
