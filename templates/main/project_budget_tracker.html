@@ -91,6 +91,31 @@
   .bt-reset { margin-top: 1rem; }
   .bt-hint { color: #94a3b8; font-size: .88rem; }
 
+  /* Summary: three number tiles */
+  .bt-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; margin-top: .8rem; }
+  .bt-stat { border: 1px solid #334155; border-radius: .8rem; padding: .9rem 1rem; background: #0f172a; }
+  .bt-stat-label { color: #94a3b8; font-size: .85rem; margin: 0; }
+  .bt-stat-value { font-size: clamp(1.2rem, 4.5vw, 1.6rem); font-weight: 800; margin: .1rem 0 0; overflow-wrap: anywhere; }
+  .bt-stat-value small { font-size: .8rem; font-weight: 600; color: #94a3b8; }
+  .bt-stat-in { color: #86efac; }
+  .bt-stat-out { color: #fca5a5; }
+  .bt-stat-left { color: #22d3ee; }
+  .bt-stat-over { color: #fca5a5; }
+  .bt-stat-note { color: #fca5a5; font-size: .8rem; margin: .2rem 0 0; }
+
+  /* Summary: spending by category bars */
+  .bt-cat { margin-top: .9rem; }
+  .bt-cat-top { display: flex; justify-content: space-between; gap: .6rem; flex-wrap: wrap; color: #cbd5e1; font-size: .92rem; margin-bottom: .3rem; }
+  .bt-cat-top strong { color: #fff; }
+  .bt-bar-track { background: #0f172a; border: 1px solid #334155; border-radius: 999px; height: .75rem; overflow: hidden; }
+  .bt-bar-fill { height: 100%; min-width: 3px; background: linear-gradient(90deg, #06b6d4, #3b82f6); border-radius: 999px; }
+
+  /* Summary: the check line */
+  .bt-check { margin-top: 1.1rem; border: 1px solid rgba(34, 197, 94, .45); background: rgba(34, 197, 94, .08); color: #bbf7d0; border-radius: .7rem; padding: .8rem 1rem; font-size: .92rem; }
+  .bt-check-bad { border-color: rgba(239, 68, 68, .45); background: rgba(239, 68, 68, .1); color: #fecaca; }
+  .bt-check p { margin: 0 0 .3rem; color: inherit; }
+  .bt-check p:last-child { margin-bottom: 0; }
+
   /* Entries table */
   .bt-table-wrap { overflow-x: auto; border: 1px solid #334155; border-radius: .7rem; margin-top: .8rem; }
   .bt-table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 520px; }
@@ -107,22 +132,23 @@
 
   @media (max-width: 600px) {
     .bt-row { grid-template-columns: 1fr; gap: 0; }
+    .bt-stats { grid-template-columns: 1fr; }
   }
 </style>
 
 <div class="wrap bt-page">
   <a href="{% url 'projects' %}" class="bt-back">← Back to Projects</a>
   <h1 class="page-title">Budget <span>Tracker</span></h1>
-  <p class="page-subtitle">A fintech project: a demo budget where you add the money that comes in and the money you spend.</p>
+  <p class="page-subtitle">A fintech project: a demo budget where you add the money that comes in and the money you spend, and see where it all went.</p>
 
   <!-- 1. What it does -->
   <div class="card bt-section">
     <h2>1. What it does</h2>
     <p>A budget shows where money comes from and where it goes. This project is a small <strong>budget tracker</strong> that saves its records in a database, built in 3 stages:</p>
     <ol class="bt-coming">
-      <li><strong>Start a budget and add entries:</strong> income and spending with a category, an amount and a date (ready now)</li>
-      <li><strong>Summary:</strong> totals, money left and spending by category (coming next)</li>
-      <li><strong>Category limits and warnings</strong> (coming later)</li>
+      <li><strong>Start a budget and add entries:</strong> income and spending with a category, an amount and a date (ready)</li>
+      <li><strong>Summary:</strong> total income, total spending, money left and spending by category with bars (ready now)</li>
+      <li><strong>Category limits and warnings</strong> (coming next)</li>
     </ol>
     <p>Everything here is made up. Only typed-in numbers, no real money, no real accounts and no personal data. There is no login: the page remembers your budget with a session.</p>
   </div>
@@ -130,7 +156,7 @@
   <!-- 2. The demo -->
   <div class="card bt-section" id="demo">
     <h2>2. Try it</h2>
-    <span class="bt-stage">Stage 1 of 3: start a budget and add entries</span>
+    <span class="bt-stage">Stage 2 of 3: summary with totals</span>
 
     <div class="bt-note">
       ⚠️ For learning only. This is <strong>not financial advice</strong>. The numbers are <strong>made up</strong>. Please do not type your real name, phone number or any personal details. Demo budgets are deleted automatically after {{ lifetime_days }} days.
@@ -143,6 +169,59 @@
         <p class="bt-name">{{ budget.name }}</p>
         <p class="bt-count">{{ entries|length }} of {{ max_entries }} entries</p>
         <p class="bt-meta">Created {{ budget.created_at|date:"j M Y, H:i" }}. Demo budgets are deleted automatically after {{ lifetime_days }} days.</p>
+      </div>
+
+      <!-- Summary -->
+      <div class="bt-box bt-next" id="summary">
+        <h3>Your summary</h3>
+
+        {% if summary %}
+        <div class="bt-stats">
+          <div class="bt-stat">
+            <p class="bt-stat-label">Total income</p>
+            <p class="bt-stat-value bt-stat-in">+{{ summary.income_total|floatformat:"0g" }} <small>RWF</small></p>
+          </div>
+          <div class="bt-stat">
+            <p class="bt-stat-label">Total spending</p>
+            <p class="bt-stat-value bt-stat-out">−{{ summary.spending_total|floatformat:"0g" }} <small>RWF</small></p>
+          </div>
+          <div class="bt-stat">
+            <p class="bt-stat-label">Money left</p>
+            {% if summary.overspent %}
+            <p class="bt-stat-value bt-stat-over">−{{ summary.left_amount|floatformat:"0g" }} <small>RWF</small></p>
+            <p class="bt-stat-note">Overspent: more went out than came in.</p>
+            {% else %}
+            <p class="bt-stat-value bt-stat-left">{{ summary.left_amount|floatformat:"0g" }} <small>RWF</small></p>
+            {% endif %}
+          </div>
+        </div>
+
+        <h3 style="margin-top:1.2rem;">Spending by category</h3>
+        {% if summary.category_rows %}
+          {% for c in summary.category_rows %}
+          <div class="bt-cat">
+            <div class="bt-cat-top">
+              <strong>{{ c.category }}</strong>
+              <span>{{ c.amount|floatformat:"0g" }} RWF · {{ c.percent }}%</span>
+            </div>
+            <div class="bt-bar-track" role="img" aria-label="{{ c.category }}: {{ c.percent }} percent of your spending">
+              <div class="bt-bar-fill" style="width: {{ c.percent }}%;"></div>
+            </div>
+          </div>
+          {% endfor %}
+          <p class="bt-hint" style="margin-top:.8rem;">Each bar shows the share of your total spending. Biggest first. Percentages are rounded, so they may not add up to exactly 100%. Savings counts as spending.</p>
+        {% else %}
+          <p class="bt-hint">No spending yet. Add a spending entry to see the bars.</p>
+        {% endif %}
+
+        <div class="bt-check {% if not summary.check_ok %}bt-check-bad{% endif %}">
+          <p><strong>Check:</strong> income − spending by category added up = money left</p>
+          <p>{{ summary.income_total|floatformat:"0g" }} − {{ summary.category_sum|floatformat:"0g" }} = {{ summary.check_left|floatformat:"0g" }} RWF
+            {% if summary.check_ok %}✓ matches the money left above{% else %}✗ does not match the money left{% endif %}</p>
+        </div>
+        {% else %}
+        <p class="bt-hint">Add your first entry below and your totals, money left and spending bars will appear here.</p>
+        {% endif %}
       </div>
 
       <!-- Add an entry -->
@@ -278,19 +357,24 @@
   <!-- 3. Why it matters -->
   <div class="card bt-section">
     <h2>3. Why it matters for fintech</h2>
-    <p>Almost every money app, from mobile money to banking apps, is built on records stored in a database: who, how much, what for and when. A budget tracker is a small version of that idea. It shows how to store records safely, check what people type, and keep each person's data separate from everyone else's. Budgeting tools also help people see where their money goes, which is the first step to saving and avoiding debt.</p>
+    <p>Almost every money app, from mobile money to banking apps, is built on records stored in a database: who, how much, what for and when. A budget tracker is a small version of that idea. It shows how to store records safely, check what people type, and keep each person's data separate from everyone else's. Its summary turns those records into something useful: how much came in, how much went out, and where it went. Money apps always add things up in more than one way and check that the answers agree, because a total that cannot be proven is a total nobody can trust. Budgeting tools also help people see where their money goes, which is the first step to saving and avoiding debt.</p>
   </div>
 
   <!-- 4. What I learned -->
   <div class="card bt-section">
     <h2>4. What I learned</h2>
-    <p class="bt-hint">Draft for stage 1. I will rewrite this in my own words after the last stage.</p>
+    <p class="bt-hint">Draft for stages 1 and 2. I will rewrite this in my own words after the last stage.</p>
     <ul class="bt-learn">
       <li>How to design two linked database tables: a Budget and its BudgetEntry rows, joined with a foreign key. Deleting a budget deletes its entries too.</li>
       <li>How to check every input on the server: whole francs only, allowed characters only, and a sensible date range.</li>
       <li>How to remember a visitor with a session instead of a login, so no personal data is needed.</li>
       <li>How to keep the demo safe: delete works only on the visitor's own entries, there are limits on entries and budgets, and old budgets are cleaned up automatically.</li>
       <li>How to work out whether an entry is income or spending from its category, so the two can never disagree.</li>
+      <li>How to add up records in Python: total income, total spending and money left, using only whole numbers so no franc is lost to rounding.</li>
+      <li>How to group spending by category with a dictionary, sort it from biggest to smallest and turn it into whole-number percentages.</li>
+      <li>How to draw bar charts with plain HTML and CSS, with no JavaScript: each bar is a box whose width is the percentage.</li>
+      <li>How to prove the maths with a check line: income minus the category amounts added up must equal the money left, and the page says so when it does not.</li>
+      <li>How a budget can go below zero when more is spent than comes in, and why the page shows that clearly instead of hiding it.</li>
     </ul>
   </div>
 

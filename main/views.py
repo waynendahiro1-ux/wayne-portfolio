@@ -937,7 +937,7 @@ def wallet_pay(request, code):
 
 
 # ---------- Fintech project 5: Budget Tracker ----------
-# Stage 1: start a budget and add entries. Stage 2: summary with totals. Stage 3: limits and polish.
+# Stage 1: start a budget and add entries. Stage 2: summary with totals and bars. Stage 3: limits and polish.
 
 BUDGET_LIFETIME_DAYS = 7    # demo budgets older than this are deleted automatically
 MAX_BUDGETS = 200           # safety limit so the free database does not fill up
@@ -1046,6 +1046,45 @@ def build_entry_rows(budget):
     return rows
 
 
+def build_summary(entries):
+    """Add up the entries: total income, total spending, money left, and spending by category.
+    Only whole-number maths, so no franc is ever lost to rounding."""
+    income_total = 0
+    spending_total = 0
+    by_category = {}                    # for example {'Food': 5000, 'Fun': 2000}
+    for row in entries:
+        if row['kind'] == 'income':
+            income_total += row['amount']
+        else:
+            spending_total += row['amount']
+            by_category[row['category']] = by_category.get(row['category'], 0) + row['amount']
+
+    money_left = income_total - spending_total      # can be below 0 if more was spent than came in
+
+    # One row per spending category, biggest first (ties go in A to Z order)
+    category_rows = []
+    for category, amount in sorted(by_category.items(), key=lambda item: (-item[1], item[0])):
+        # Share of all spending, rounded to the nearest whole percent (whole-number maths)
+        percent = (amount * 200 + spending_total) // (2 * spending_total)
+        category_rows.append({'category': category, 'amount': amount, 'percent': percent})
+
+    # The check line: income minus the category amounts added up must equal the money left
+    category_sum = sum(r['amount'] for r in category_rows)
+    check_left = income_total - category_sum
+
+    return {
+        'income_total': income_total,
+        'spending_total': spending_total,
+        'money_left': money_left,
+        'left_amount': abs(money_left),             # the page shows the sign itself
+        'overspent': money_left < 0,
+        'category_rows': category_rows,
+        'category_sum': category_sum,
+        'check_left': check_left,
+        'check_ok': check_left == money_left,       # must be True
+    }
+
+
 def budget_tracker(request):
     today = timezone.now().date()
     errors = []             # errors for the "start a budget" form
@@ -1126,6 +1165,7 @@ def budget_tracker(request):
             return redirect(reverse('budget_tracker') + '#entries')
 
     entries = build_entry_rows(budget) if budget is not None else []
+    summary = build_summary(entries) if entries else None      # nothing to add up until there is an entry
 
     return render(request, 'main/project_budget_tracker.html', {
         'budget': budget,
@@ -1135,6 +1175,7 @@ def budget_tracker(request):
         'entry_values': entry_values,
         'flash': flash,
         'entries': entries,
+        'summary': summary,
         'income_categories': INCOME_CATEGORIES,
         'expense_categories': EXPENSE_CATEGORIES,
         'max_entries': MAX_ENTRIES,
@@ -1189,7 +1230,7 @@ def projects(request):
         {
             'icon': '📊',
             'title': 'Budget Tracker',
-            'description': 'Start a demo budget, then add your income and spending with a category, an amount and a date. Everything is saved in a database. Typed-in numbers only, for learning, not financial advice.',
+            'description': 'Start a demo budget, add your income and spending, and see your totals, the money left and spending by category with bars. Everything is saved in a database. Typed-in numbers only, for learning, not financial advice.',
             'tech': ['Python', 'Django', 'Database', 'Fintech'],
             'page': 'budget_tracker',    # opens the demo page on this site
             'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',
