@@ -116,6 +116,23 @@
   .bt-check p { margin: 0 0 .3rem; color: inherit; }
   .bt-check p:last-child { margin-bottom: 0; }
 
+  /* Limits: warning banner, state bars and pills */
+  .bt-warn { margin-top: 1.2rem; border: 1px solid rgba(250, 204, 21, .45); background: rgba(250, 204, 21, .08); color: #fde68a; border-radius: .8rem; padding: .9rem 1.1rem; }
+  .bt-warn-over { border-color: rgba(239, 68, 68, .5); background: rgba(239, 68, 68, .1); color: #fecaca; }
+  .bt-warn p { margin: 0 0 .4rem; color: inherit; }
+  .bt-warn ul { margin: 0; padding-left: 1.2rem; font-size: .92rem; }
+  .bt-warn li { margin-bottom: .25rem; }
+  .bt-bar-ok { background: #22c55e; }
+  .bt-bar-near { background: #facc15; }
+  .bt-bar-over { background: #ef4444; }
+  .bt-limit-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .4rem; }
+  .bt-limit-info { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+  .bt-pill { border-radius: 999px; padding: .15rem .7rem; font-size: .78rem; font-weight: 600; border: 1px solid #334155; color: #cbd5e1; }
+  .bt-pill-ok { color: #86efac; border-color: rgba(34, 197, 94, .5); }
+  .bt-pill-near { color: #fde68a; border-color: rgba(250, 204, 21, .5); }
+  .bt-pill-over { color: #fca5a5; border-color: rgba(239, 68, 68, .5); }
+  .bt-limit-item { border-top: 1px solid #334155; margin-top: .9rem; padding-top: .2rem; }
+
   /* Entries table */
   .bt-table-wrap { overflow-x: auto; border: 1px solid #334155; border-radius: .7rem; margin-top: .8rem; }
   .bt-table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 520px; }
@@ -147,8 +164,8 @@
     <p>A budget shows where money comes from and where it goes. This project is a small <strong>budget tracker</strong> that saves its records in a database, built in 3 stages:</p>
     <ol class="bt-coming">
       <li><strong>Start a budget and add entries:</strong> income and spending with a category, an amount and a date (ready)</li>
-      <li><strong>Summary:</strong> total income, total spending, money left and spending by category with bars (ready now)</li>
-      <li><strong>Category limits and warnings</strong> (coming next)</li>
+      <li><strong>Summary:</strong> total income, total spending, money left and spending by category with bars (ready)</li>
+      <li><strong>Spending limits and warnings:</strong> set a limit for a category and get a warning when you get close or go over (ready now)</li>
     </ol>
     <p>Everything here is made up. Only typed-in numbers, no real money, no real accounts and no personal data. There is no login: the page remembers your budget with a session.</p>
   </div>
@@ -156,7 +173,7 @@
   <!-- 2. The demo -->
   <div class="card bt-section" id="demo">
     <h2>2. Try it</h2>
-    <span class="bt-stage">Stage 2 of 3: summary with totals</span>
+    <span class="bt-stage">Stage 3 of 3: spending limits and warnings</span>
 
     <div class="bt-note">
       ⚠️ For learning only. This is <strong>not financial advice</strong>. The numbers are <strong>made up</strong>. Please do not type your real name, phone number or any personal details. Demo budgets are deleted automatically after {{ lifetime_days }} days.
@@ -170,6 +187,21 @@
         <p class="bt-count">{{ entries|length }} of {{ max_entries }} entries</p>
         <p class="bt-meta">Created {{ budget.created_at|date:"j M Y, H:i" }}. Demo budgets are deleted automatically after {{ lifetime_days }} days.</p>
       </div>
+
+      <!-- Warnings: limits that are close or over -->
+      {% if warnings %}
+      <div class="bt-warn {% if has_over %}bt-warn-over{% endif %}" id="warnings">
+        <p><strong>{% if has_over %}⚠ You are over a spending limit{% else %}⚠ You are close to a spending limit{% endif %}</strong></p>
+        <ul>
+          {% for w in warnings %}
+          <li><strong>{{ w.category }}:</strong>
+            {% if w.state == 'over' %}over the limit by {{ w.over_by|floatformat:"0g" }} RWF (spent {{ w.spent|floatformat:"0g" }} of {{ w.amount|floatformat:"0g" }}).
+            {% else %}{{ w.percent }}% of the limit used, {{ w.left|floatformat:"0g" }} RWF left.{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
 
       <!-- Summary -->
       <div class="bt-box bt-next" id="summary">
@@ -221,6 +253,74 @@
         </div>
         {% else %}
         <p class="bt-hint">Add your first entry below and your totals, money left and spending bars will appear here.</p>
+        {% endif %}
+      </div>
+
+      <!-- Spending limits -->
+      <div class="bt-box bt-next" id="limits">
+        <h3>Spending limits</h3>
+        <p class="bt-hint">Set the most you want to spend in a category. You get a warning when you have used {{ warn_percent }}% of a limit, and another when you go over it. Only spending categories can have a limit. Setting a limit again changes the old one.</p>
+
+        {% if limit_flash %}
+        <div class="bt-ok">✓ {{ limit_flash }}</div>
+        {% endif %}
+
+        {% if limit_errors %}
+        <ul class="bt-errors">
+          {% for e in limit_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="post" action="{% url 'budget_tracker' %}#limits">
+          {% csrf_token %}
+          <input type="hidden" name="mode" value="set_limit">
+
+          <div class="bt-row">
+            <div class="bt-field">
+              <label for="limit_category">Category</label>
+              <select id="limit_category" name="limit_category">
+                <option value="">Choose a spending category</option>
+                {% for c in expense_categories %}
+                <option value="{{ c }}" {% if limit_values.category == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="bt-field">
+              <label for="limit_amount">Limit (RWF)</label>
+              <input type="text" inputmode="numeric" id="limit_amount" name="limit_amount" value="{{ limit_values.amount }}" placeholder="e.g. 20000" autocomplete="off">
+              <small>Whole francs, more than 0.</small>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary bt-button">Set limit</button>
+        </form>
+
+        {% if limit_rows %}
+          {% for r in limit_rows %}
+          <div class="bt-cat bt-limit-item">
+            <div class="bt-cat-top">
+              <strong>{{ r.category }}</strong>
+              <span>{{ r.spent|floatformat:"0g" }} of {{ r.amount|floatformat:"0g" }} RWF · {{ r.percent }}%</span>
+            </div>
+            <div class="bt-bar-track" role="img" aria-label="{{ r.category }}: {{ r.percent }} percent of the limit used">
+              <div class="bt-bar-fill bt-bar-{{ r.state }}" style="width: {{ r.bar }}%;"></div>
+            </div>
+            <div class="bt-limit-foot">
+              <div class="bt-limit-info">
+                <span class="bt-pill bt-pill-{{ r.state }}">{% if r.state == 'over' %}Over the limit{% elif r.left == 0 %}At the limit{% elif r.state == 'near' %}Close to the limit{% else %}Within the limit{% endif %}</span>
+                <span class="bt-hint">{% if r.state == 'over' %}Over by {{ r.over_by|floatformat:"0g" }} RWF{% else %}{{ r.left|floatformat:"0g" }} RWF left{% endif %}</span>
+              </div>
+              <form method="post" action="{% url 'budget_tracker' %}#limits">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="delete_limit">
+                <input type="hidden" name="limit_id" value="{{ r.id }}">
+                <button type="submit" class="bt-small-button">Remove limit</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="bt-hint" style="margin-top:1rem;">No limits yet. Pick a category above to set your first one.</p>
         {% endif %}
       </div>
 
@@ -357,24 +457,19 @@
   <!-- 3. Why it matters -->
   <div class="card bt-section">
     <h2>3. Why it matters for fintech</h2>
-    <p>Almost every money app, from mobile money to banking apps, is built on records stored in a database: who, how much, what for and when. A budget tracker is a small version of that idea. It shows how to store records safely, check what people type, and keep each person's data separate from everyone else's. Its summary turns those records into something useful: how much came in, how much went out, and where it went. Money apps always add things up in more than one way and check that the answers agree, because a total that cannot be proven is a total nobody can trust. Budgeting tools also help people see where their money goes, which is the first step to saving and avoiding debt.</p>
+    <p>Almost every money app, from mobile money to banking apps, is built on records stored in a database: who, how much, what for and when. A budget tracker is a small version of that idea. It shows how to store records safely, check what people type, and keep each person's data separate from everyone else's. Its summary turns those records into something useful: how much came in, how much went out, and where it went. Money apps always add things up in more than one way and check that the answers agree, because a total that cannot be proven is a total nobody can trust. Limits and warnings go one step further: they tell people before a problem happens, not after. Banks and mobile money apps do the same with spending alerts and daily transfer limits. Budgeting tools also help people see where their money goes, which is the first step to saving and avoiding debt.</p>
   </div>
 
   <!-- 4. What I learned -->
   <div class="card bt-section">
     <h2>4. What I learned</h2>
-    <p class="bt-hint">Draft for stages 1 and 2. I will rewrite this in my own words after the last stage.</p>
+    <p class="bt-hint">Draft. I will rewrite this in my own words.</p>
     <ul class="bt-learn">
-      <li>How to design two linked database tables: a Budget and its BudgetEntry rows, joined with a foreign key. Deleting a budget deletes its entries too.</li>
-      <li>How to check every input on the server: whole francs only, allowed characters only, and a sensible date range.</li>
-      <li>How to remember a visitor with a session instead of a login, so no personal data is needed.</li>
-      <li>How to keep the demo safe: delete works only on the visitor's own entries, there are limits on entries and budgets, and old budgets are cleaned up automatically.</li>
-      <li>How to work out whether an entry is income or spending from its category, so the two can never disagree.</li>
-      <li>How to add up records in Python: total income, total spending and money left, using only whole numbers so no franc is lost to rounding.</li>
-      <li>How to group spending by category with a dictionary, sort it from biggest to smallest and turn it into whole-number percentages.</li>
-      <li>How to draw bar charts with plain HTML and CSS, with no JavaScript: each bar is a box whose width is the percentage.</li>
-      <li>How to prove the maths with a check line: income minus the category amounts added up must equal the money left, and the page says so when it does not.</li>
-      <li>How a budget can go below zero when more is spent than comes in, and why the page shows that clearly instead of hiding it.</li>
+      <li>How to link database tables (a budget, its entries and its limits), so deleting a budget cleans up everything inside it.</li>
+      <li>How to check every input on the server and use a session instead of a login, so no personal data is needed.</li>
+      <li>How to add up money with whole numbers only, and prove the total with a check line.</li>
+      <li>How to draw bars with plain HTML and CSS, with no JavaScript.</li>
+      <li>How to compare spending with a limit, and test the edge cases: 79%, 80%, exactly at the limit and over it.</li>
     </ul>
   </div>
 

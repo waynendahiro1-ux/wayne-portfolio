@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ContactMessage, Game, Wallet, Transfer, PaymentRequest, Budget, BudgetEntry
+from .models import ContactMessage, Game, Wallet, Transfer, PaymentRequest, Budget, BudgetEntry, BudgetLimit
 
 
 @admin.register(ContactMessage)
@@ -41,3 +41,9 @@ class BudgetAdmin(admin.ModelAdmin):
 class BudgetEntryAdmin(admin.ModelAdmin):
     list_display = ('date', 'budget', 'kind', 'category', 'label', 'amount')
     list_filter = ('kind', 'category')
+
+
+@admin.register(BudgetLimit)
+class BudgetLimitAdmin(admin.ModelAdmin):
+    list_display = ('budget', 'category', 'amount')
+    list_filter = ('category',)

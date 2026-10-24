@@ -17,7 +17,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import ContactForm
-from .models import Game, Wallet, Transfer, PaymentRequest, Budget, BudgetEntry
+from .models import Game, Wallet, Transfer, PaymentRequest, Budget, BudgetEntry, BudgetLimit
 
 logger = logging.getLogger(__name__)
 
@@ -937,11 +937,12 @@ def wallet_pay(request, code):
 
 
 # ---------- Fintech project 5: Budget Tracker ----------
-# Stage 1: start a budget and add entries. Stage 2: summary with totals and bars. Stage 3: limits and polish.
+# Stage 1: start a budget and add entries. Stage 2: summary with totals and bars. Stage 3: spending limits and warnings.
 
 BUDGET_LIFETIME_DAYS = 7    # demo budgets older than this are deleted automatically
 MAX_BUDGETS = 200           # safety limit so the free database does not fill up
 MAX_ENTRIES = 60            # the most entries one budget can hold
+WARN_PERCENT = 80           # a spending limit shows a warning when this % of it has been used
 
 # The category lists. You can change these words WITHOUT making a migration.
 # Every word must be different across BOTH lists, because the kind (income or spending)
@@ -1085,24 +1086,73 @@ def build_summary(entries):
     }
 
 
+def read_limit_category(text, errors):
+    """Check the chosen category for a limit. Only SPENDING categories can have a limit."""
+    text = text.strip()
+
+    if text in EXPENSE_CATEGORIES:
+        return text
+    errors.append("Please choose a spending category for the limit.")
+    return None
+
+
+def build_limit_rows(budget, entries):
+    """Compare what was spent in each category with its limit. Whole-number maths only.
+    Each row gets a state: 'ok', 'near' (WARN_PERCENT or more of the limit used) or 'over'."""
+    spent_by_category = {}
+    for row in entries:
+        if row['kind'] == 'expense':
+            spent_by_category[row['category']] = spent_by_category.get(row['category'], 0) + row['amount']
+
+    rows = []
+    for limit in budget.limits.all():
+        spent = spent_by_category.get(limit.category, 0)
+
+        if spent > limit.amount:
+            state = 'over'
+        elif spent * 100 >= WARN_PERCENT * limit.amount:    # same as spent >= 80% of the limit, no decimals
+            state = 'near'
+        else:
+            state = 'ok'
+
+        percent = spent * 100 // limit.amount               # whole percent of the limit used (rounded down)
+        rows.append({
+            'id': limit.id,
+            'category': limit.category,
+            'amount': limit.amount,
+            'spent': spent,
+            'percent': percent,
+            'bar': min(percent, 100),                       # the bar never goes past full
+            'left': max(limit.amount - spent, 0),
+            'over_by': max(spent - limit.amount, 0),
+            'state': state,
+        })
+
+    rows.sort(key=lambda r: (-r['percent'], r['category']))     # the most-used limits first
+    return rows
+
+
 def budget_tracker(request):
     today = timezone.now().date()
     errors = []             # errors for the "start a budget" form
     entry_errors = []       # errors for the "add an entry" form
+    limit_errors = []       # errors for the "set a limit" form
     name = ''
     # What the visitor typed, so the boxes keep their values if something is wrong
     entry_values = {'category': '', 'amount': '', 'date': today.isoformat(), 'label': ''}
+    limit_values = {'category': '', 'amount': ''}
 
     # 1. Does this visitor already have a demo budget? (we remember it with the session)
     budget = get_session_budget(request)
 
-    # One-time message saved before a redirect
+    # One-time messages saved before a redirect
     flash = request.session.pop('budget_flash', None)
+    limit_flash = request.session.pop('limit_flash', None)
 
     if request.method == 'POST':
         mode = request.POST.get('mode', '')     # which button was pressed
 
-        # ----- Start over: delete this visitor's budget and all its entries -----
+        # ----- Start over: delete this visitor's budget and all its entries and limits -----
         if mode == 'reset':
             if budget is not None:
                 budget.delete()
@@ -1114,7 +1164,7 @@ def budget_tracker(request):
             name = request.POST.get('name', '').strip()
             clean_name = read_budget_name(name, errors)
 
-            # Tidy up: delete demo budgets older than 7 days (their entries go with them)
+            # Tidy up: delete demo budgets older than 7 days (their entries and limits go with them)
             old = timezone.now() - timedelta(days=BUDGET_LIFETIME_DAYS)
             Budget.objects.filter(created_at__lt=old).delete()
 
@@ -1164,8 +1214,40 @@ def budget_tracker(request):
                 request.session['budget_flash'] = "Entry deleted."
             return redirect(reverse('budget_tracker') + '#entries')
 
+        # ----- Set (or change) a spending limit for one category -----
+        elif mode == 'set_limit' and budget is not None:
+            limit_values['category'] = request.POST.get('limit_category', '').strip()
+            limit_values['amount'] = request.POST.get('limit_amount', '').strip()
+
+            limit_category = read_limit_category(limit_values['category'], limit_errors)
+            limit_amount = read_whole_number(limit_values['amount'], 'The limit', limit_errors, required=True)
+
+            if limit_amount == 0:
+                limit_errors.append("The limit must be more than 0.")
+
+            if not limit_errors:
+                # One limit per category: this makes a new limit, or changes the old one
+                BudgetLimit.objects.update_or_create(
+                    budget=budget,
+                    category=limit_category,
+                    defaults={'amount': limit_amount},
+                )
+                request.session['limit_flash'] = f"Limit for {limit_category} set to {limit_amount:,} RWF."
+                return redirect(reverse('budget_tracker') + '#limits')
+
+        # ----- Remove a limit (only from this visitor's own budget) -----
+        elif mode == 'delete_limit' and budget is not None:
+            limit_id = request.POST.get('limit_id', '')
+            if limit_id.isdecimal() and len(limit_id) <= 12:
+                BudgetLimit.objects.filter(id=int(limit_id), budget=budget).delete()
+                request.session['limit_flash'] = "Limit removed."
+            return redirect(reverse('budget_tracker') + '#limits')
+
     entries = build_entry_rows(budget) if budget is not None else []
     summary = build_summary(entries) if entries else None      # nothing to add up until there is an entry
+    limit_rows = build_limit_rows(budget, entries) if budget is not None else []
+    warnings = [row for row in limit_rows if row['state'] != 'ok']     # limits that are close or over
+    has_over = any(row['state'] == 'over' for row in warnings)
 
     return render(request, 'main/project_budget_tracker.html', {
         'budget': budget,
@@ -1176,6 +1258,13 @@ def budget_tracker(request):
         'flash': flash,
         'entries': entries,
         'summary': summary,
+        'limit_rows': limit_rows,
+        'warnings': warnings,
+        'has_over': has_over,
+        'limit_errors': limit_errors,
+        'limit_values': limit_values,
+        'limit_flash': limit_flash,
+        'warn_percent': WARN_PERCENT,
         'income_categories': INCOME_CATEGORIES,
         'expense_categories': EXPENSE_CATEGORIES,
         'max_entries': MAX_ENTRIES,
@@ -1230,7 +1319,7 @@ def projects(request):
         {
             'icon': '📊',
             'title': 'Budget Tracker',
-            'description': 'Start a demo budget, add your income and spending, and see your totals, the money left and spending by category with bars. Everything is saved in a database. Typed-in numbers only, for learning, not financial advice.',
+            'description': 'Start a demo budget, add your income and spending, see your totals and spending by category, and set spending limits that warn you when you get close. Everything is saved in a database. Typed-in numbers only, for learning, not financial advice.',
             'tech': ['Python', 'Django', 'Database', 'Fintech'],
             'page': 'budget_tracker',    # opens the demo page on this site
             'code': 'https://github.com/waynendahiro1-ux/wayne-portfolio',

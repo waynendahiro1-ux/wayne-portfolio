@@ -104,3 +104,21 @@ class BudgetEntry(models.Model):
 
     def __str__(self):
         return f"{self.date} {self.category}: {self.amount} RWF ({self.kind})"
+
+
+class BudgetLimit(models.Model):
+    """A spending limit for one category in one budget (stage 3). For example: Food, 20000 RWF."""
+    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name='limits')   # deleting a budget deletes its limits
+    category = models.CharField(max_length=30)                      # a spending category, for example Food
+    amount = models.PositiveBigIntegerField()                       # the limit in fake RWF, whole francs only
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['category']
+        constraints = [
+            # only ONE limit per category in each budget (setting it again changes the old one)
+            models.UniqueConstraint(fields=['budget', 'category'], name='one_limit_per_category'),
+        ]
+
+    def __str__(self):
+        return f"{self.category}: limit {self.amount} RWF"
