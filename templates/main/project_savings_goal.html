@@ -6,7 +6,7 @@
 <style>
   .sg-page { max-width: 760px; }
 
-  .sg-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+  .sg-back { display: inline-block; margin-bottom: 1rem; color: var(--accent-text); font-weight: 500; }
 
   .sg-section { margin-bottom: 1.5rem; }
   .sg-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
@@ -26,19 +26,19 @@
   .sg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .sg-field { margin-bottom: 1rem; }
   .sg-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
-  .sg-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .sg-field small { display: block; color: var(--text-muted); font-size: .82rem; margin-top: .3rem; }
   .sg-field input {
     width: 100%;
     padding: .75rem 1rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: .6rem;
-    color: #e2e8f0;
+    color: var(--text);
     font-size: 1rem;
     font-family: inherit;
   }
-  .sg-field input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
-  .sg-or { text-align: center; color: #94a3b8; font-weight: 600; margin: -.2rem 0 .8rem; }
+  .sg-field input:focus { outline: none; border-color: var(--accent-text); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .22); }
+  .sg-or { text-align: center; color: var(--text-muted); font-weight: 600; margin: -.2rem 0 .8rem; }
   .sg-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
 
   /* Errors */
@@ -54,17 +54,17 @@
   /* Result */
   .sg-result {
     margin-top: 1.5rem;
-    background: rgba(34, 211, 238, .07);
-    border: 1px solid rgba(34, 211, 238, .3);
+    background: rgba(var(--accent-rgb), .08);
+    border: 1px solid rgba(var(--accent-rgb), .35);
     border-radius: .9rem;
     padding: 1.4rem;
   }
   .sg-result h3 { color: #fff; font-size: 1.1rem; margin-bottom: .5rem; }
-  .sg-big { font-size: clamp(1.7rem, 6vw, 2.3rem); font-weight: 800; color: #22d3ee; margin: .2rem 0 .6rem; }
-  .sg-bar { background: #0f172a; border-radius: 9999px; height: 12px; overflow: hidden; margin: .8rem 0 .3rem; }
-  .sg-bar-fill { background: linear-gradient(135deg, #06b6d4, #3b82f6); height: 100%; }
+  .sg-big { font-size: clamp(1.7rem, 6vw, 2.3rem); font-weight: 800; color: var(--accent-text); margin: .2rem 0 .6rem; }
+  .sg-bar { background: var(--bg); border-radius: 9999px; height: 12px; overflow: hidden; margin: .8rem 0 .3rem; }
+  .sg-bar-fill { background: linear-gradient(90deg, var(--blue), var(--blue-text)); height: 100%; }
 
-  .sg-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .sg-learn { padding-left: 1.2rem; color: var(--text-soft); }
   .sg-learn li { margin-bottom: .5rem; }
 
   @media (max-width: 600px) {
@@ -151,8 +151,8 @@
         <p>Still to save: <strong>{{ result.remaining|floatformat:"0g" }} RWF</strong></p>
 
         <div class="sg-bar"><div class="sg-bar-fill" style="width: {{ result.percent }}%;"></div></div>
-        <small style="color:#94a3b8;">{{ result.percent }}% of your target is already saved.</small>
-        <p style="margin-top:.8rem; font-size:.9rem; color:#94a3b8;">Amounts are rounded up to the next whole month or whole franc, so the last month may need a little less.</p>
+        <small style="color:var(--text-muted);">{{ result.percent }}% of your target is already saved.</small>
+        <p style="margin-top:.8rem; font-size:.9rem; color:var(--text-muted);">Amounts are rounded up to the next whole month or whole franc, so the last month may need a little less.</p>
       {% endif %}
     </div>
     {% endif %}

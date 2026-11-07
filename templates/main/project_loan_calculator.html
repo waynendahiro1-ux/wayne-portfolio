@@ -6,7 +6,7 @@
 <style>
   .lc-page { max-width: 760px; }
 
-  .lc-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+  .lc-back { display: inline-block; margin-bottom: 1rem; color: var(--accent-text); font-weight: 500; }
 
   .lc-section { margin-bottom: 1.5rem; }
   .lc-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
@@ -26,18 +26,18 @@
   .lc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .lc-field { margin-bottom: 1rem; }
   .lc-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
-  .lc-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .lc-field small { display: block; color: var(--text-muted); font-size: .82rem; margin-top: .3rem; }
   .lc-field input {
     width: 100%;
     padding: .75rem 1rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: .6rem;
-    color: #e2e8f0;
+    color: var(--text);
     font-size: 1rem;
     font-family: inherit;
   }
-  .lc-field input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
+  .lc-field input:focus { outline: none; border-color: var(--accent-text); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .22); }
   .lc-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
 
   /* Errors */
@@ -53,32 +53,32 @@
   /* Result */
   .lc-result {
     margin-top: 1.5rem;
-    background: rgba(34, 211, 238, .07);
-    border: 1px solid rgba(34, 211, 238, .3);
+    background: rgba(var(--accent-rgb), .08);
+    border: 1px solid rgba(var(--accent-rgb), .35);
     border-radius: .9rem;
     padding: 1.4rem;
   }
   .lc-result h3 { color: #fff; font-size: 1.1rem; margin-bottom: .5rem; }
-  .lc-big { font-size: clamp(1.7rem, 6vw, 2.3rem); font-weight: 800; color: #22d3ee; margin: .2rem 0 .8rem; }
+  .lc-big { font-size: clamp(1.7rem, 6vw, 2.3rem); font-weight: 800; color: var(--accent-text); margin: .2rem 0 .8rem; }
   .lc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: 1rem; }
-  .lc-stat { background: #0f172a; border: 1px solid #334155; border-radius: .7rem; padding: .8rem 1rem; }
-  .lc-stat span { display: block; color: #94a3b8; font-size: .82rem; }
+  .lc-stat { background: var(--bg); border: 1px solid var(--border); border-radius: .7rem; padding: .8rem 1rem; }
+  .lc-stat span { display: block; color: var(--text-muted); font-size: .82rem; }
   .lc-stat strong { color: #fff; font-size: 1.1rem; }
-  .lc-bar { background: #0f172a; border-radius: 9999px; height: 12px; overflow: hidden; margin: .8rem 0 .3rem; }
-  .lc-bar-fill { background: linear-gradient(135deg, #8b5cf6, #3b82f6); height: 100%; }
+  .lc-bar { background: var(--bg); border-radius: 9999px; height: 12px; overflow: hidden; margin: .8rem 0 .3rem; }
+  .lc-bar-fill { background: linear-gradient(90deg, var(--orange), var(--orange-text)); height: 100%; }
 
   /* Repayment table (scrolls sideways on small phones instead of breaking the page) */
   .lc-details { margin-top: 1.2rem; }
-  .lc-details summary { cursor: pointer; color: #67e8f9; font-weight: 600; margin-bottom: .8rem; }
-  .lc-table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border: 1px solid #334155; border-radius: .7rem; }
+  .lc-details summary { cursor: pointer; color: var(--accent-text); font-weight: 600; margin-bottom: .8rem; }
+  .lc-table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: .7rem; }
   .lc-table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 480px; }
-  .lc-table th { position: sticky; top: 0; background: #0f172a; color: #67e8f9; text-align: right; padding: .6rem .8rem; font-weight: 600; }
-  .lc-table td { text-align: right; padding: .5rem .8rem; color: #cbd5e1; border-top: 1px solid #334155; }
+  .lc-table th { position: sticky; top: 0; background: var(--bg); color: var(--accent-text); text-align: right; padding: .6rem .8rem; font-weight: 600; }
+  .lc-table td { text-align: right; padding: .5rem .8rem; color: var(--text-soft); border-top: 1px solid var(--border); }
   .lc-table th:first-child, .lc-table td:first-child { text-align: left; }
 
-  .lc-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .lc-learn { padding-left: 1.2rem; color: var(--text-soft); }
   .lc-learn li { margin-bottom: .5rem; }
-  .lc-formula { background: #0f172a; border: 1px solid #334155; border-radius: .6rem; padding: .8rem 1rem; color: #e2e8f0; font-family: Consolas, monospace; font-size: .95rem; overflow-x: auto; margin-bottom: 1rem; }
+  .lc-formula { background: var(--bg); border: 1px solid var(--border); border-radius: .6rem; padding: .8rem 1rem; color: var(--text); font-family: Consolas, monospace; font-size: .95rem; overflow-x: auto; margin-bottom: 1rem; }
 
   @media (max-width: 600px) {
     .lc-row { grid-template-columns: 1fr; gap: 0; }
@@ -153,7 +153,7 @@
       </div>
 
       <div class="lc-bar"><div class="lc-bar-fill" style="width: {{ result.interest_share }}%;"></div></div>
-      <small style="color:#94a3b8;">{{ result.interest_share }}% of everything you pay back is interest.</small>
+      <small style="color:var(--text-muted);">{{ result.interest_share }}% of everything you pay back is interest.</small>
 
       <details class="lc-details" open>
         <summary>Repayment table (click to hide or show)</summary>
@@ -182,7 +182,7 @@
           </table>
         </div>
       </details>
-      <p style="margin-top:.8rem; font-size:.9rem; color:#94a3b8;">All amounts are in RWF and rounded to the nearest franc, so small differences of 1 RWF can appear between rows and totals.</p>
+      <p style="margin-top:.8rem; font-size:.9rem; color:var(--text-muted);">All amounts are in RWF and rounded to the nearest franc, so small differences of 1 RWF can appear between rows and totals.</p>
     </div>
     {% endif %}
   </div>

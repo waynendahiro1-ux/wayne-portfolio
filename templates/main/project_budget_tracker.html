@@ -6,7 +6,7 @@
 <style>
   .bt-page { max-width: 760px; }
 
-  .bt-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+  .bt-back { display: inline-block; margin-bottom: 1rem; color: var(--accent-text); font-weight: 500; }
 
   .bt-section { margin-bottom: 1.5rem; }
   .bt-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
@@ -26,9 +26,9 @@
   /* Stage badge */
   .bt-stage {
     display: inline-block;
-    background: rgba(34, 211, 238, .12);
-    border: 1px solid rgba(34, 211, 238, .35);
-    color: #67e8f9;
+    background: rgba(var(--accent-rgb), .14);
+    border: 1px solid rgba(var(--accent-rgb), .4);
+    color: var(--accent-text);
     border-radius: 999px;
     padding: .2rem .8rem;
     font-size: .82rem;
@@ -37,27 +37,27 @@
   }
 
   /* Forms */
-  .bt-box { border: 1px solid #334155; border-radius: .9rem; padding: 1.2rem; }
+  .bt-box { border: 1px solid var(--border); border-radius: .9rem; padding: 1.2rem; }
   .bt-next { margin-top: 1.2rem; }
   .bt-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .bt-field { margin-bottom: 1rem; }
   .bt-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
-  .bt-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .bt-field small { display: block; color: var(--text-muted); font-size: .82rem; margin-top: .3rem; }
   .bt-field input, .bt-field select {
     width: 100%;
     padding: .75rem 1rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: .6rem;
-    color: #e2e8f0;
+    color: var(--text);
     font-size: 1rem;
     font-family: inherit;
     color-scheme: dark;
   }
-  .bt-field input:focus, .bt-field select:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
+  .bt-field input:focus, .bt-field select:focus { outline: none; border-color: var(--accent-text); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .22); }
   .bt-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
-  .bt-small-button { border: 1px solid #334155; background: transparent; color: #cbd5e1; border-radius: .5rem; padding: .4rem .8rem; cursor: pointer; font-family: inherit; font-size: .85rem; }
-  .bt-small-button:hover { border-color: #22d3ee; color: #fff; }
+  .bt-small-button { border: 1px solid var(--border); background: transparent; color: var(--text-soft); border-radius: .5rem; padding: .4rem .8rem; cursor: pointer; font-family: inherit; font-size: .85rem; }
+  .bt-small-button:hover { border-color: var(--accent-text); color: #fff; }
 
   /* Errors and success */
   .bt-errors {
@@ -79,36 +79,36 @@
 
   /* The budget card */
   .bt-budget {
-    background: linear-gradient(135deg, rgba(34, 211, 238, .14), rgba(15, 23, 42, .9));
-    border: 1px solid rgba(34, 211, 238, .4);
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), .18), rgba(18, 19, 26, .9));
+    border: 1px solid rgba(var(--accent-rgb), .45);
     border-radius: 1rem;
     padding: 1.4rem;
   }
   .bt-demo-tag { color: #fde68a; font-size: .78rem; font-weight: 700; letter-spacing: .08em; }
   .bt-name { color: #fff; font-size: 1.3rem; font-weight: 700; margin: .3rem 0 .4rem; }
-  .bt-count { color: #22d3ee; font-size: 1.1rem; font-weight: 700; margin: 0 0 .4rem; }
-  .bt-meta { color: #94a3b8; font-size: .85rem; margin: 0; }
+  .bt-count { color: var(--accent-text); font-size: 1.1rem; font-weight: 700; margin: 0 0 .4rem; }
+  .bt-meta { color: var(--text-muted); font-size: .85rem; margin: 0; }
   .bt-reset { margin-top: 1rem; }
-  .bt-hint { color: #94a3b8; font-size: .88rem; }
+  .bt-hint { color: var(--text-muted); font-size: .88rem; }
 
   /* Summary: three number tiles */
   .bt-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; margin-top: .8rem; }
-  .bt-stat { border: 1px solid #334155; border-radius: .8rem; padding: .9rem 1rem; background: #0f172a; }
-  .bt-stat-label { color: #94a3b8; font-size: .85rem; margin: 0; }
+  .bt-stat { border: 1px solid var(--border); border-radius: .8rem; padding: .9rem 1rem; background: var(--bg); }
+  .bt-stat-label { color: var(--text-muted); font-size: .85rem; margin: 0; }
   .bt-stat-value { font-size: clamp(1.2rem, 4.5vw, 1.6rem); font-weight: 800; margin: .1rem 0 0; overflow-wrap: anywhere; }
-  .bt-stat-value small { font-size: .8rem; font-weight: 600; color: #94a3b8; }
+  .bt-stat-value small { font-size: .8rem; font-weight: 600; color: var(--text-muted); }
   .bt-stat-in { color: #86efac; }
   .bt-stat-out { color: #fca5a5; }
-  .bt-stat-left { color: #22d3ee; }
+  .bt-stat-left { color: var(--accent-text); }
   .bt-stat-over { color: #fca5a5; }
   .bt-stat-note { color: #fca5a5; font-size: .8rem; margin: .2rem 0 0; }
 
   /* Summary: spending by category bars */
   .bt-cat { margin-top: .9rem; }
-  .bt-cat-top { display: flex; justify-content: space-between; gap: .6rem; flex-wrap: wrap; color: #cbd5e1; font-size: .92rem; margin-bottom: .3rem; }
+  .bt-cat-top { display: flex; justify-content: space-between; gap: .6rem; flex-wrap: wrap; color: var(--text-soft); font-size: .92rem; margin-bottom: .3rem; }
   .bt-cat-top strong { color: #fff; }
-  .bt-bar-track { background: #0f172a; border: 1px solid #334155; border-radius: 999px; height: .75rem; overflow: hidden; }
-  .bt-bar-fill { height: 100%; min-width: 3px; background: linear-gradient(90deg, #06b6d4, #3b82f6); border-radius: 999px; }
+  .bt-bar-track { background: var(--bg); border: 1px solid var(--border); border-radius: 999px; height: .75rem; overflow: hidden; }
+  .bt-bar-fill { height: 100%; min-width: 3px; background: linear-gradient(90deg, var(--blue), var(--blue-text)); border-radius: 999px; }
 
   /* Summary: the check line */
   .bt-check { margin-top: 1.1rem; border: 1px solid rgba(34, 197, 94, .45); background: rgba(34, 197, 94, .08); color: #bbf7d0; border-radius: .7rem; padding: .8rem 1rem; font-size: .92rem; }
@@ -127,24 +127,24 @@
   .bt-bar-over { background: #ef4444; }
   .bt-limit-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .4rem; }
   .bt-limit-info { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
-  .bt-pill { border-radius: 999px; padding: .15rem .7rem; font-size: .78rem; font-weight: 600; border: 1px solid #334155; color: #cbd5e1; }
+  .bt-pill { border-radius: 999px; padding: .15rem .7rem; font-size: .78rem; font-weight: 600; border: 1px solid var(--border); color: var(--text-soft); }
   .bt-pill-ok { color: #86efac; border-color: rgba(34, 197, 94, .5); }
   .bt-pill-near { color: #fde68a; border-color: rgba(250, 204, 21, .5); }
   .bt-pill-over { color: #fca5a5; border-color: rgba(239, 68, 68, .5); }
-  .bt-limit-item { border-top: 1px solid #334155; margin-top: .9rem; padding-top: .2rem; }
+  .bt-limit-item { border-top: 1px solid var(--border); margin-top: .9rem; padding-top: .2rem; }
 
   /* Entries table */
-  .bt-table-wrap { overflow-x: auto; border: 1px solid #334155; border-radius: .7rem; margin-top: .8rem; }
+  .bt-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: .7rem; margin-top: .8rem; }
   .bt-table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 520px; }
-  .bt-table th { background: #0f172a; color: #67e8f9; text-align: left; padding: .6rem .8rem; font-weight: 600; white-space: nowrap; }
-  .bt-table td { text-align: left; padding: .5rem .8rem; color: #cbd5e1; border-top: 1px solid #334155; white-space: nowrap; }
+  .bt-table th { background: var(--bg); color: var(--accent-text); text-align: left; padding: .6rem .8rem; font-weight: 600; white-space: nowrap; }
+  .bt-table td { text-align: left; padding: .5rem .8rem; color: var(--text-soft); border-top: 1px solid var(--border); white-space: nowrap; }
   .bt-table th.bt-num, .bt-table td.bt-num { text-align: right; }
   .bt-minus { color: #fca5a5; font-weight: 700; }
   .bt-plus { color: #86efac; font-weight: 700; }
 
-  .bt-coming { padding-left: 1.2rem; color: #cbd5e1; }
+  .bt-coming { padding-left: 1.2rem; color: var(--text-soft); }
   .bt-coming li { margin-bottom: .4rem; }
-  .bt-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .bt-learn { padding-left: 1.2rem; color: var(--text-soft); }
   .bt-learn li { margin-bottom: .5rem; }
 
   @media (max-width: 600px) {

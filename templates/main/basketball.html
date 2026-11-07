@@ -1,6 +1,8 @@
 {% extends 'main/base.html' %}
 {% load static %}
 
+{% block theme %}theme-court{% endblock %}
+
 {% block title %}Basketball | Wayne Portfolio{% endblock %}
 
 {% block content %}
@@ -38,13 +40,13 @@
   <!-- NEW: Stats tracker -->
   <style>
     .stat-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:1rem; margin:1rem 0 1.5rem; }
-    .stat-box { text-align:center; padding:1rem .5rem; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); }
-    .stat-box .num { font-size:1.9rem; font-weight:700; color:#67e8f9; }
-    .stat-box .label { font-size:.85rem; opacity:.8; }
+    .stat-box { text-align:center; padding:1rem .5rem; border-radius:12px; background:rgba(var(--accent-rgb), .08); border:1px solid rgba(var(--accent-rgb), .25); }
+    .stat-box .num { font-size:1.9rem; font-weight:700; color:var(--accent-text); }
+    .stat-box .label { font-size:.85rem; color:var(--text-muted); }
     .table-scroll { overflow-x:auto; }
     .games-table { width:100%; border-collapse:collapse; min-width:420px; }
-    .games-table th, .games-table td { padding:.6rem .7rem; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1); }
-    .games-table th { color:#67e8f9; font-size:.9rem; }
+    .games-table th, .games-table td { padding:.6rem .7rem; text-align:left; border-bottom:1px solid var(--border); color:var(--text-soft); }
+    .games-table th { color:var(--accent-text); font-size:.9rem; }
   </style>
 
   <div class="card" style="margin-bottom:2.5rem;">
@@ -91,10 +93,10 @@
 
   <div class="card" style="margin-bottom:2.5rem;">
     <h2>What basketball taught me</h2>
-    <p><strong style="color:#67e8f9;">Discipline:</strong> showing up every day, even when no one is watching.</p>
-    <p><strong style="color:#67e8f9;">Pressure:</strong> staying calm when the game is on the line.</p>
-    <p><strong style="color:#67e8f9;">Leadership:</strong> earning respect through actions, not words.</p>
-    <p><strong style="color:#67e8f9;">Resilience:</strong> losses are lessons, and the next game is a new chance.</p>
+    <p><strong style="color:var(--accent-text);">Discipline:</strong> showing up every day, even when no one is watching.</p>
+    <p><strong style="color:var(--accent-text);">Pressure:</strong> staying calm when the game is on the line.</p>
+    <p><strong style="color:var(--accent-text);">Leadership:</strong> earning respect through actions, not words.</p>
+    <p><strong style="color:var(--accent-text);">Resilience:</strong> losses are lessons, and the next game is a new chance.</p>
   </div>
 
   <div class="btn-row">

@@ -6,7 +6,7 @@
 <style>
   .ws-page { max-width: 760px; }
 
-  .ws-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+  .ws-back { display: inline-block; margin-bottom: 1rem; color: var(--accent-text); font-weight: 500; }
 
   .ws-section { margin-bottom: 1.5rem; }
   .ws-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
@@ -26,9 +26,9 @@
   /* Stage badge */
   .ws-stage {
     display: inline-block;
-    background: rgba(34, 211, 238, .12);
-    border: 1px solid rgba(34, 211, 238, .35);
-    color: #67e8f9;
+    background: rgba(var(--accent-rgb), .14);
+    border: 1px solid rgba(var(--accent-rgb), .4);
+    color: var(--accent-text);
     border-radius: 999px;
     padding: .2rem .8rem;
     font-size: .82rem;
@@ -37,26 +37,26 @@
   }
 
   /* Form */
-  .ws-box { border: 1px solid #334155; border-radius: .9rem; padding: 1.2rem; }
+  .ws-box { border: 1px solid var(--border); border-radius: .9rem; padding: 1.2rem; }
   .ws-send { margin-top: 1.2rem; }
   .ws-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .ws-field { margin-bottom: 1rem; }
   .ws-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
-  .ws-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .ws-field small { display: block; color: var(--text-muted); font-size: .82rem; margin-top: .3rem; }
   .ws-field input {
     width: 100%;
     padding: .75rem 1rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: .6rem;
-    color: #e2e8f0;
+    color: var(--text);
     font-size: 1rem;
     font-family: inherit;
   }
-  .ws-field input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
+  .ws-field input:focus { outline: none; border-color: var(--accent-text); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .22); }
   .ws-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
-  .ws-small-button { border: 1px solid #334155; background: transparent; color: #cbd5e1; border-radius: .5rem; padding: .4rem .8rem; cursor: pointer; font-family: inherit; font-size: .85rem; }
-  .ws-small-button:hover { border-color: #22d3ee; color: #fff; }
+  .ws-small-button { border: 1px solid var(--border); background: transparent; color: var(--text-soft); border-radius: .5rem; padding: .4rem .8rem; cursor: pointer; font-family: inherit; font-size: .85rem; }
+  .ws-small-button:hover { border-color: var(--accent-text); color: #fff; }
 
   /* Errors and success */
   .ws-errors {
@@ -78,29 +78,29 @@
 
   /* The wallet card */
   .ws-wallet {
-    background: linear-gradient(135deg, rgba(34, 211, 238, .14), rgba(15, 23, 42, .9));
-    border: 1px solid rgba(34, 211, 238, .4);
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), .18), rgba(18, 19, 26, .9));
+    border: 1px solid rgba(var(--accent-rgb), .45);
     border-radius: 1rem;
     padding: 1.4rem;
   }
   .ws-demo-tag { color: #fde68a; font-size: .78rem; font-weight: 700; letter-spacing: .08em; }
   .ws-name { color: #fff; font-size: 1.3rem; font-weight: 700; margin: .3rem 0 0; }
-  .ws-number { color: #94a3b8; font-size: .95rem; letter-spacing: .06em; margin: 0 0 .8rem; }
-  .ws-label { color: #94a3b8; font-size: .85rem; margin: 0; }
-  .ws-balance { font-size: clamp(1.7rem, 7vw, 2.4rem); font-weight: 800; color: #22d3ee; margin: .1rem 0 .6rem; }
-  .ws-meta { color: #94a3b8; font-size: .85rem; margin: 0; }
+  .ws-number { color: var(--text-muted); font-size: .95rem; letter-spacing: .06em; margin: 0 0 .8rem; }
+  .ws-label { color: var(--text-muted); font-size: .85rem; margin: 0; }
+  .ws-balance { font-size: clamp(1.7rem, 7vw, 2.4rem); font-weight: 800; color: var(--accent-text); margin: .1rem 0 .6rem; }
+  .ws-meta { color: var(--text-muted); font-size: .85rem; margin: 0; }
   .ws-reset { margin-top: 1rem; }
-  .ws-hint { color: #94a3b8; font-size: .88rem; }
+  .ws-hint { color: var(--text-muted); font-size: .88rem; }
 
   /* Fee table dropdown */
-  .ws-details { margin-top: 1rem; font-size: .92rem; color: #cbd5e1; }
-  .ws-details summary { cursor: pointer; color: #67e8f9; font-weight: 600; }
+  .ws-details { margin-top: 1rem; font-size: .92rem; color: var(--text-soft); }
+  .ws-details summary { cursor: pointer; color: var(--accent-text); font-weight: 600; }
 
   /* Tables (fee table and history) */
-  .ws-table-wrap { overflow-x: auto; border: 1px solid #334155; border-radius: .7rem; margin-top: .8rem; }
+  .ws-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: .7rem; margin-top: .8rem; }
   .ws-table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 320px; }
-  .ws-table th { background: #0f172a; color: #67e8f9; text-align: right; padding: .6rem .8rem; font-weight: 600; white-space: nowrap; }
-  .ws-table td { text-align: right; padding: .5rem .8rem; color: #cbd5e1; border-top: 1px solid #334155; white-space: nowrap; }
+  .ws-table th { background: var(--bg); color: var(--accent-text); text-align: right; padding: .6rem .8rem; font-weight: 600; white-space: nowrap; }
+  .ws-table td { text-align: right; padding: .5rem .8rem; color: var(--text-soft); border-top: 1px solid var(--border); white-space: nowrap; }
   .ws-table th:first-child, .ws-table td:first-child { text-align: left; }
   .ws-history td:nth-child(2) { text-align: left; }
   .ws-history th:nth-child(2) { text-align: left; }
@@ -108,9 +108,9 @@
   .ws-plus { color: #86efac; font-weight: 700; }
 
   /* Payment requests and QR codes */
-  .ws-req { border: 1px solid #334155; border-radius: .8rem; padding: 1rem; margin-top: 1rem; }
+  .ws-req { border: 1px solid var(--border); border-radius: .8rem; padding: 1rem; margin-top: 1rem; }
   .ws-req-top { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; }
-  .ws-pill { border-radius: 999px; padding: .15rem .7rem; font-size: .78rem; font-weight: 600; border: 1px solid #334155; color: #cbd5e1; }
+  .ws-pill { border-radius: 999px; padding: .15rem .7rem; font-size: .78rem; font-weight: 600; border: 1px solid var(--border); color: var(--text-soft); }
   .ws-pill-open { color: #fde68a; border-color: rgba(250, 204, 21, .45); }
   .ws-pill-paid { color: #86efac; border-color: rgba(34, 197, 94, .5); }
   .ws-qr { background: #ffffff; border-radius: .7rem; padding: .6rem; width: 100%; max-width: 240px; margin: .9rem auto .6rem; }
@@ -118,9 +118,9 @@
   .ws-link { word-break: break-all; font-size: .82rem; }
   .ws-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .6rem; }
 
-  .ws-coming { padding-left: 1.2rem; color: #cbd5e1; }
+  .ws-coming { padding-left: 1.2rem; color: var(--text-soft); }
   .ws-coming li { margin-bottom: .4rem; }
-  .ws-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .ws-learn { padding-left: 1.2rem; color: var(--text-soft); }
   .ws-learn li { margin-bottom: .5rem; }
 
   @media (max-width: 600px) {

@@ -31,14 +31,15 @@
     justify-content: center;
   }
 
+  /* Orange ring (the court) with a blue glow (the code) */
   .home-hero-photo {
     width: 280px;
     height: 280px;
     max-width: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid rgba(34, 211, 238, 0.5);
-    box-shadow: 0 0 60px rgba(34, 211, 238, 0.25), 0 20px 50px rgba(0, 0, 0, 0.4);
+    border: 3px solid rgba(var(--orange-rgb), 0.75);
+    box-shadow: 0 0 60px rgba(var(--blue-rgb), 0.35), 0 20px 50px rgba(0, 0, 0, 0.4);
   }
 
   .home-badges {
@@ -56,9 +57,16 @@
     border-radius: 9999px;
     font-size: 0.8rem;
     font-weight: 500;
-    background: rgba(34, 211, 238, 0.12);
-    color: #67e8f9;
-    border: 1px solid rgba(34, 211, 238, 0.25);
+    background: rgba(var(--blue-rgb), 0.14);
+    color: var(--blue-text);
+    border: 1px solid rgba(var(--blue-rgb), 0.4);
+  }
+
+  /* Basketball badges are orange */
+  .home-badge.court {
+    background: rgba(var(--orange-rgb), 0.14);
+    color: var(--orange-text);
+    border-color: rgba(var(--orange-rgb), 0.4);
   }
 
   .home-title {
@@ -71,7 +79,7 @@
   }
 
   .home-title span {
-    background: linear-gradient(135deg, #22d3ee, #3b82f6, #8b5cf6);
+    background: linear-gradient(135deg, var(--blue-text), var(--orange));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -79,14 +87,14 @@
 
   .home-lead {
     font-size: 1.15rem;
-    color: #cbd5e1;
+    color: var(--text-soft);
     line-height: 1.7;
     margin-bottom: 0.8rem;
     max-width: 600px;
   }
 
   .home-sub {
-    color: #94a3b8;
+    color: var(--text-muted);
     line-height: 1.65;
     margin-bottom: 2rem;
     max-width: 600px;
@@ -96,40 +104,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.9rem;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, #06b6d4, #3b82f6);
-    color: white;
-    font-weight: 600;
-    padding: 0.8rem 1.7rem;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    transition: all 0.25s ease;
-    border: none;
-    display: inline-block;
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
-  }
-
-  .btn-secondary {
-    background: transparent;
-    color: #67e8f9;
-    font-weight: 600;
-    padding: 0.8rem 1.7rem;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    border: 1px solid rgba(34, 211, 238, 0.45);
-    transition: all 0.25s ease;
-    display: inline-block;
-  }
-
-  .btn-secondary:hover {
-    background: rgba(34, 211, 238, 0.1);
-    border-color: #22d3ee;
   }
 
   @media (max-width: 800px) {
@@ -161,8 +135,8 @@
   .home-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
-    border: 1px solid rgba(56, 189, 248, 0.15);
+    background: linear-gradient(145deg, var(--surface), var(--bg));
+    border: 1px solid var(--border);
     border-radius: 1rem;
     margin-bottom: 3.5rem;
   }
@@ -170,7 +144,7 @@
   .home-stat {
     padding: 1.4rem 1rem;
     text-align: center;
-    border-right: 1px solid rgba(148, 163, 184, 0.12);
+    border-right: 1px solid var(--border);
   }
 
   .home-stat:last-child {
@@ -180,12 +154,18 @@
   .home-stat-value {
     font-size: 1.7rem;
     font-weight: 800;
-    color: #67e8f9;
+    color: var(--blue-text);
     line-height: 1.2;
   }
 
+  /* The two basketball stats are orange */
+  .home-stat:nth-child(2) .home-stat-value,
+  .home-stat:nth-child(3) .home-stat-value {
+    color: var(--orange-text);
+  }
+
   .home-stat-label {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.85rem;
     margin-top: 0.3rem;
   }
@@ -200,7 +180,7 @@
     }
 
     .home-stat:nth-child(-n+2) {
-      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      border-bottom: 1px solid var(--border);
     }
   }
 
@@ -217,7 +197,7 @@
   }
 
   .home-heading-sub {
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-bottom: 1.8rem;
   }
 
@@ -231,24 +211,24 @@
   .home-card {
     display: block;
     text-decoration: none;
-    background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
-    border: 1px solid rgba(56, 189, 248, 0.12);
+    background: linear-gradient(145deg, var(--surface), var(--bg));
+    border: 1px solid var(--border);
     border-radius: 1rem;
     padding: 1.6rem;
     transition: all 0.3s ease;
   }
 
   .home-card:hover {
-    border-color: rgba(56, 189, 248, 0.35);
+    border-color: rgba(var(--blue-rgb), 0.55);
     transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(34, 211, 238, 0.08);
+    box-shadow: 0 12px 30px rgba(var(--blue-rgb), 0.15);
   }
 
   .home-card-icon {
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    background: rgba(34, 211, 238, 0.12);
+    background: rgba(var(--blue-rgb), 0.16);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -264,16 +244,30 @@
   }
 
   .home-card p {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.93rem;
     line-height: 1.6;
     margin: 0 0 1rem;
   }
 
   .home-card-link {
-    color: #67e8f9;
+    color: var(--blue-text);
     font-size: 0.9rem;
     font-weight: 600;
+  }
+
+  /* Basketball cards are orange */
+  .home-card.court:hover {
+    border-color: rgba(var(--orange-rgb), 0.55);
+    box-shadow: 0 12px 30px rgba(var(--orange-rgb), 0.15);
+  }
+
+  .home-card.court .home-card-icon {
+    background: rgba(var(--orange-rgb), 0.16);
+  }
+
+  .home-card.court .home-card-link {
+    color: var(--orange-text);
   }
 
   /* ---------- Summit banner ---------- */
@@ -283,15 +277,15 @@
     justify-content: space-between;
     gap: 1.5rem;
     flex-wrap: wrap;
-    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
-    border: 1px solid rgba(34, 211, 238, 0.3);
+    background: linear-gradient(135deg, rgba(var(--blue-rgb), 0.2), rgba(var(--orange-rgb), 0.12));
+    border: 1px solid rgba(var(--blue-rgb), 0.4);
     border-radius: 1rem;
     padding: 1.8rem;
     margin-bottom: 3.5rem;
   }
 
   .home-summit-tag {
-    color: #67e8f9;
+    color: var(--orange-text);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -307,15 +301,15 @@
   }
 
   .home-summit p {
-    color: #cbd5e1;
+    color: var(--text-soft);
     margin: 0;
     line-height: 1.6;
   }
 
   /* ---------- Bottom CTA ---------- */
   .home-cta {
-    background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
-    border: 1px solid rgba(56, 189, 248, 0.18);
+    background: linear-gradient(145deg, var(--surface), var(--bg));
+    border: 1px solid var(--border);
     border-radius: 1rem;
     padding: 2.5rem 1.5rem;
     text-align: center;
@@ -330,7 +324,7 @@
   }
 
   .home-cta p {
-    color: #94a3b8;
+    color: var(--text-muted);
     max-width: 480px;
     margin: 0 auto 1.5rem;
     line-height: 1.6;
@@ -343,15 +337,15 @@
   <section class="home-hero">
     <div class="home-hero-text">
       <div class="home-badges">
-        <span class="home-badge">🏀 Basketball Captain</span>
-        <span class="home-badge">🏆 GPSL Champions 24–25</span>
+        <span class="home-badge court">🏀 Basketball Captain</span>
+        <span class="home-badge court">🏆 GPSL Champions 24–25</span>
         <span class="home-badge">⭐ A* Computer Science</span>
       </div>
 
       <h1 class="home-title">Hi, I'm <span>Wayne</span></h1>
 
       <p class="home-lead">
-        Grade 12 student from <strong style="color:#67e8f9;">Kigali, Rwanda</strong>. Passionate about technology, web development, fintech, and building useful digital solutions.
+        Grade 12 student from <strong style="color:var(--blue-text);">Kigali, Rwanda</strong>. Passionate about technology, web development, fintech, and building useful digital solutions.
       </p>
 
       <p class="home-sub">
@@ -396,14 +390,14 @@
     <p class="home-heading-sub">A mix of leadership on the court and results in the classroom.</p>
 
     <div class="home-cards">
-      <a href="{% url 'basketball' %}" class="home-card">
+      <a href="{% url 'basketball' %}" class="home-card court">
         <div class="home-card-icon">🏀</div>
         <h3>Basketball Captain</h3>
         <p>Leading the school team with focus, discipline, and belief. Building chemistry and competing at a high level.</p>
         <span class="home-card-link">Read the story →</span>
       </a>
 
-      <a href="{% url 'basketball' %}" class="home-card">
+      <a href="{% url 'basketball' %}" class="home-card court">
         <div class="home-card-icon">🏆</div>
         <h3>2024–25 GPSL Champions</h3>
         <p>Won the GPSL Basketball Tournament with the team. Hard work and late practices paid off.</p>

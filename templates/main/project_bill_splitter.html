@@ -6,7 +6,7 @@
 <style>
   .bs-page { max-width: 760px; }
 
-  .bs-back { display: inline-block; margin-bottom: 1rem; color: #67e8f9; font-weight: 500; }
+  .bs-back { display: inline-block; margin-bottom: 1rem; color: var(--accent-text); font-weight: 500; }
 
   .bs-section { margin-bottom: 1.5rem; }
   .bs-section h2 { color: #fff; font-size: 1.25rem; font-weight: 650; }
@@ -25,7 +25,7 @@
 
   /* The two forms sit in their own boxes */
   .bs-box {
-    border: 1px solid #334155;
+    border: 1px solid var(--border);
     border-radius: .9rem;
     padding: 1.2rem;
     margin-bottom: 1.2rem;
@@ -37,18 +37,18 @@
   .bs-person { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: .7rem; }
   .bs-field { margin-bottom: 1rem; }
   .bs-field label { display: block; color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: .35rem; }
-  .bs-field small { display: block; color: #94a3b8; font-size: .82rem; margin-top: .3rem; }
+  .bs-field small { display: block; color: var(--text-muted); font-size: .82rem; margin-top: .3rem; }
   .bs-field input, .bs-person input {
     width: 100%;
     padding: .75rem 1rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: .6rem;
-    color: #e2e8f0;
+    color: var(--text);
     font-size: 1rem;
     font-family: inherit;
   }
-  .bs-field input:focus, .bs-person input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, .15); }
+  .bs-field input:focus, .bs-person input:focus { outline: none; border-color: var(--accent-text); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .22); }
   .bs-button { border: 0; cursor: pointer; font-family: inherit; font-size: 1rem; }
 
   /* Errors */
@@ -64,21 +64,21 @@
   /* Result */
   .bs-result {
     margin-top: 1.4rem;
-    background: rgba(34, 211, 238, .07);
-    border: 1px solid rgba(34, 211, 238, .3);
+    background: rgba(var(--accent-rgb), .08);
+    border: 1px solid rgba(var(--accent-rgb), .35);
     border-radius: .9rem;
     padding: 1.4rem;
   }
-  .bs-big { font-size: clamp(1.5rem, 6vw, 2.1rem); font-weight: 800; color: #22d3ee; margin: .2rem 0 .6rem; }
-  .bs-table-wrap { overflow-x: auto; max-height: 360px; overflow-y: auto; border: 1px solid #334155; border-radius: .7rem; margin-top: .8rem; }
+  .bs-big { font-size: clamp(1.5rem, 6vw, 2.1rem); font-weight: 800; color: var(--accent-text); margin: .2rem 0 .6rem; }
+  .bs-table-wrap { overflow-x: auto; max-height: 360px; overflow-y: auto; border: 1px solid var(--border); border-radius: .7rem; margin-top: .8rem; }
   .bs-table { width: 100%; border-collapse: collapse; font-size: .92rem; min-width: 320px; }
-  .bs-table th { position: sticky; top: 0; background: #0f172a; color: #67e8f9; text-align: right; padding: .6rem .8rem; font-weight: 600; }
-  .bs-table td { text-align: right; padding: .5rem .8rem; color: #cbd5e1; border-top: 1px solid #334155; }
+  .bs-table th { position: sticky; top: 0; background: var(--bg); color: var(--accent-text); text-align: right; padding: .6rem .8rem; font-weight: 600; }
+  .bs-table td { text-align: right; padding: .5rem .8rem; color: var(--text-soft); border-top: 1px solid var(--border); }
   .bs-table th:first-child, .bs-table td:first-child { text-align: left; }
-  .bs-table tfoot td { color: #fff; font-weight: 700; background: #0f172a; }
+  .bs-table tfoot td { color: #fff; font-weight: 700; background: var(--bg); }
   .bs-check { margin-top: .8rem; font-size: .9rem; color: #86efac; }
 
-  .bs-learn { padding-left: 1.2rem; color: #cbd5e1; }
+  .bs-learn { padding-left: 1.2rem; color: var(--text-soft); }
   .bs-learn li { margin-bottom: .5rem; }
 
   @media (max-width: 600px) {
@@ -241,7 +241,7 @@
           </table>
         </div>
         <p class="bs-check">✓ Check: the shares add up to {{ split_result.check|floatformat:"0g" }} RWF, exactly the total.</p>
-        <p style="margin-top:.6rem; font-size:.9rem; color:#94a3b8;">The tip and shared cost are split in proportion to what each person ordered. If that leaves a few francs over, they go to the people whose shares were rounded down the most.</p>
+        <p style="margin-top:.6rem; font-size:.9rem; color:var(--text-muted);">The tip and shared cost are split in proportion to what each person ordered. If that leaves a few francs over, they go to the people whose shares were rounded down the most.</p>
       </div>
       {% endif %}
     </div>
